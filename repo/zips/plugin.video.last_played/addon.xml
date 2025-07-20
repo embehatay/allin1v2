@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='utf-8'?>
-<addons><addon id="plugin.video.last_played" name="Last Played" version="6.1.0" provider-name="Luis Rodrigues">
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.last_played" name="Last Played" version="6.1.0" provider-name="Luis Rodrigues">
 	<extension point="xbmc.python.pluginsource" library="addon.py">
 		<provides>video</provides>
 	</extension>
@@ -19,7 +19,7 @@
 		<description lang="pt_PT">Ultimos filmes, episodios e musicas tocadas, incluindo fontes de streaming de qualquer addon</description>
 		<description lang="pt_BR">Ultimos filmes, episodios e musicas tocadas, incluindo fontes de streaming de qualquer addon</description>
 		<description lang="sk_SK">Naposledy prehrávané filmy, seriály a hudba, vrátane streamov z ľubovoľného doplnku</description>
-		<disclaimer lang="en_GB" />
+		<disclaimer lang="en_GB"></disclaimer>
 		<platform>all</platform>
 		<license>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007</license>
 		<source>https://github.com/5-star/plugin.video.last_played</source>
@@ -27,4 +27,4 @@
 			<icon>icon.png</icon>
 		</assets>
 	</extension>
-</addon></addons>
+</addon>
