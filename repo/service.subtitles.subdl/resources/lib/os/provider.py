@@ -16,7 +16,6 @@ CONTENT_TYPE = "application/json"
 REQUEST_TIMEOUT = 30
 
 
-
 def logging(msg):
     return log(__name__, msg)
 
@@ -31,7 +30,8 @@ class SubtitlesProvider:
 
         self.api_key = api_key
         self.tmdb_api_key = tmdb_api_key
-        self.request_headers = {"Content-Type": CONTENT_TYPE, "Accept": CONTENT_TYPE}
+        self.request_headers = {
+            "Content-Type": CONTENT_TYPE, "Accept": CONTENT_TYPE}
         self.session = Session()
         self.session.headers = self.request_headers
         # Use any other cache outside of module/Kodi
@@ -42,7 +42,8 @@ class SubtitlesProvider:
             r = self.session.get(url, timeout=REQUEST_TIMEOUT)
             r.raise_for_status()
         except (ConnectionError, Timeout, ReadTimeout) as e:
-            raise ServiceUnavailable(f"Unknown Error, empty response: {e.status_code}: {e!r}")
+            raise ServiceUnavailable(
+                f"Unknown Error, empty response: {e.status_code}: {e!r}")
         except HTTPError as e:
             status_code = e.response.status_code
             if status_code == 429:
@@ -59,8 +60,9 @@ class SubtitlesProvider:
         # Replace dots that are likely separators (not part of abbreviations)
         # Replace a dot if it's followed by an uppercase letter or at the end of the name
         clean_name = re.sub(r'\.(?=[A-Z])', ' ', clean_name)
-        clean_name = re.sub(r'\.', ' ', clean_name)  # Replace remaining dots that might be separators
-        clean_name = re.sub(r'\s+', ' ', clean_name)  
+        # Replace remaining dots that might be separators
+        clean_name = re.sub(r'\.', ' ', clean_name)
+        clean_name = re.sub(r'\s+', ' ', clean_name)
 
         # Extract year
         year_match = re.search(r'\b(19[0-9]{2}|20[0-9]{2})\b', clean_name)
@@ -72,13 +74,15 @@ class SubtitlesProvider:
             type_content = 'tv'
             seasonIdx = series_match.group(1)
             episodeIdx = series_match.group(2)
-            title = re.sub(r'\s*S\d+E\d+.*', '', clean_name[:year_match.start() if year_match else None]).strip()
+            title = re.sub(
+                r'\s*S\d+E\d+.*', '', clean_name[:year_match.start() if year_match else None]).strip()
             title = title.rstrip('.').rstrip()
         else:
             type_content = 'movie'
             seasonIdx = None
             episodeIdx = None
-            title = clean_name[:year_match.start()].strip().rstrip('.') if year_match else clean_name.rstrip('.')
+            title = clean_name[:year_match.start()].strip().rstrip(
+                '.') if year_match else clean_name.rstrip('.')
 
         return {
             "title": title,
@@ -87,8 +91,6 @@ class SubtitlesProvider:
             "season_number": seasonIdx,
             "episode_number": episodeIdx
         }
-
-
 
     def get_tmdb_id(self, metadata):
         url = f"{TMDB_API}/{metadata['type']}?query={metadata['title']}&api_key={self.tmdb_api_key}"
@@ -110,7 +112,7 @@ class SubtitlesProvider:
             raise ProviderError("Invalid JSON returned by provider")
         logging(f"Query returned {len(result['subtitles'])} subtitles")
         return result["subtitles"] if result["subtitles"] else None
-    
+
     def download_subtitle(self, query: dict):
         download_link = "https://dl.subdl.com/" + query["file_id"]
         res = self.session.get(download_link)
@@ -127,4 +129,3 @@ class SubtitlesProvider:
             raise ProviderError(f"Failed to unzip subtitle: {e}")
 
         return file_content
-    
