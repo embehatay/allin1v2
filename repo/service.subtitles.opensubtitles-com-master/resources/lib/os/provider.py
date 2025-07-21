@@ -6,6 +6,7 @@ from requests import Session, ConnectionError, HTTPError, ReadTimeout, Timeout, 
 from resources.lib.os.model.request.subtitles import OpenSubtitlesSubtitlesRequest
 from resources.lib.os.model.request.download import OpenSubtitlesDownloadRequest
 import requests
+import re
 
 '''local kodi module imports. replace by any other exception, cache, log provider'''
 from resources.lib.exceptions import AuthenticationError, ConfigurationError, DownloadLimitExceeded, ProviderError, \
@@ -15,6 +16,7 @@ from resources.lib.utilities import log
 
 requests.packages.urllib3.util.connection.HAS_IPV6 = False
 API_URL = "https://api.opensubtitles.com/api/v1/"
+TMDB_API = "https://api.themoviedb.org/3/search"
 API_LOGIN = "login"
 API_SUBTITLES = "subtitles"
 API_DOWNLOAD = "download"
@@ -68,6 +70,7 @@ class OpenSubtitlesProvider:
             raise ConfigurationError("Api_key must be specified")
 
         self.api_key = api_key
+        self.tmdb_api_key = '668e72a7450f67db4dd7ee02434cb15a'
         self.username = username
         self.password = password
 
@@ -123,7 +126,10 @@ class OpenSubtitlesProvider:
         self.cache.set(key="user_token", value=value)
 
     def search_subtitles(self, query: Union[dict, OpenSubtitlesSubtitlesRequest]):
-
+        if 'episode_number' in query and query['episode_number']:
+            query['parent_tmdb_id'] = self.get_tmdb_id(query)
+        else:
+            query['tmdb_id'] = self.get_tmdb_id(query)
         params = query_to_params(query, 'OpenSubtitlesSubtitlesRequest')
 
         if not len(params):
@@ -161,6 +167,35 @@ class OpenSubtitlesProvider:
 
         return None
 
+    def handle_request(self, url):
+        try:
+            r = self.session.get(url, timeout=REQUEST_TIMEOUT)
+            r.raise_for_status()
+        except (ConnectionError, Timeout, ReadTimeout) as e:
+            raise ServiceUnavailable(
+                f"Unknown Error, empty response: {e.status_code}: {e!r}")
+        except HTTPError as e:
+            status_code = e.response.status_code
+            if status_code == 429:
+                raise TooManyRequests()
+            elif status_code == 503:
+                raise ProviderError(e)
+            else:
+                raise ProviderError(f"Bad status code: {status_code}")
+        return r.json()
+
+    def get_tmdb_id(self, metadata):
+        if 'episode_number' in metadata and metadata['episode_number']:
+            type = 'tv'
+        else:
+            type = 'movie'
+        url = f"{TMDB_API}/{type}?query={metadata['query']}&api_key={self.tmdb_api_key}"
+        if 'year' in metadata and metadata['year']:
+            url += f"&year={metadata['year']}"
+        data = self.handle_request(url)
+        if "results" not in data or not data["results"]:
+            raise ProviderError("Invalid JSON returned by provider")
+        return data["results"][0]["id"]
 #   def download_subtitle(self, query: Union[dict, OpenSubtitlesDownloadRequest]):
 #       if self.user_token is None:
 #           logging("No cached token, we'll try to login again.")
