@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="embe" name="embe" version="1.0.0" provider-name="Embe">
+<addon id="allin1" name="allin1" version="1.0.0" provider-name="Embe">
     <extension point="xbmc.addon.repository" name="Embe Repository">
         <dir>
             <info compressed="false">https://raw.githubusercontent.com/embehatay/allin1/main/repo/zips/addons.xml</info>
