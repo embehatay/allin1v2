@@ -8,8 +8,9 @@ from resources.lib.exceptions import AuthenticationError, ConfigurationError, Do
     ServiceUnavailable, TooManyRequests, BadUsernameError
 from resources.lib.cache import Cache
 from resources.lib.utilities import log
+import requests
 
-
+requests.packages.urllib3.util.connection.HAS_IPV6 = False
 API_URL = "https://api.subdl.com/api/v1/subtitles"
 TMDB_API = "https://api.themoviedb.org/3/search"
 CONTENT_TYPE = "application/json"
