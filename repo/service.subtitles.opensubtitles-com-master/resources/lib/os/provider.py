@@ -1,10 +1,11 @@
 
+import imp
 from typing import Union
 
 from requests import Session, ConnectionError, HTTPError, ReadTimeout, Timeout, RequestException
-
 from resources.lib.os.model.request.subtitles import OpenSubtitlesSubtitlesRequest
 from resources.lib.os.model.request.download import OpenSubtitlesDownloadRequest
+import requests
 
 '''local kodi module imports. replace by any other exception, cache, log provider'''
 from resources.lib.exceptions import AuthenticationError, ConfigurationError, DownloadLimitExceeded, ProviderError, \
@@ -12,6 +13,7 @@ from resources.lib.exceptions import AuthenticationError, ConfigurationError, Do
 from resources.lib.cache import Cache
 from resources.lib.utilities import log
 
+requests.packages.urllib3.util.connection.HAS_IPV6 = False
 API_URL = "https://api.opensubtitles.com/api/v1/"
 API_LOGIN = "login"
 API_SUBTITLES = "subtitles"
