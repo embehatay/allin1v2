@@ -126,10 +126,13 @@ class OpenSubtitlesProvider:
         self.cache.set(key="user_token", value=value)
 
     def search_subtitles(self, query: Union[dict, OpenSubtitlesSubtitlesRequest]):
+        tmdb_id = self.get_tmdb_id(query)
         if 'episode_number' in query and query['episode_number']:
-            query['parent_tmdb_id'] = self.get_tmdb_id(query)
+            query['parent_tmdb_id'] = tmdb_id
         else:
-            query['tmdb_id'] = self.get_tmdb_id(query)
+            query['tmdb_id'] = tmdb_id
+        logging('embe tmdb_id: ')
+        logging(tmdb_id)
         params = query_to_params(query, 'OpenSubtitlesSubtitlesRequest')
 
         if not len(params):
