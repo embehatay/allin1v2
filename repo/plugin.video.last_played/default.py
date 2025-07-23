@@ -98,6 +98,10 @@ def JSquery(request):
             else: error = response['error']
     return (result, data, error)
 
+result, data = JSquery({"jsonrpc": "2.0", "method": "Settings.GetSettingValue", "params": { "setting": "subtitles.custompath"}, "id": 0})[:2]
+
+custom_subtitle_path = data['value']
+xbmc.log('Last played subtile folder: ' + str(result) + '\n' + ' ' + str(data))
 def send2starmovies(line):
     if enable_debug	== "true": xbmc.log("<<<plugin.video.last_played (starmovies) "+str(line), 3)
     if LP.vidPos/LP.vidTot<0.8: return
@@ -187,7 +191,7 @@ def videoEnd():
     xid = lp.DBID
     xtype = lp.type
     xfanart = unquote(lp.fanart).replace("image://","").rstrip("/")
-    xthumb = unquote(lp.thumbnail).replace("image://","").rstrip("/")	
+    xthumb = unquote(lp.thumbnail).replace("image://","").rstrip("/")
     if ".jpg" not in xthumb.lower(): xthumb=xfanart
     xfile = lp.file.strip()
     xvideo = lp.video.strip()
@@ -269,16 +273,28 @@ class KodiPlayer(xbmc.Player):
     def onPlayBackStopped(self):
         videoEnd()
 
+    @classmethod
+    def onPlayBackPaused(self):
+        xbmc.log('Last played debug: Player Paused!!!!!')
+        videoEnd()
+
     def onPlayBackStarted(self):
         if xbmc.getCondVisibility('Player.HasMedia'):
             lp.video = self.getPlayingFile()
             request = {"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "year", "thumbnail", "fanart", "showtitle", "season", "episode", "file"], "playerid": 1 }, "id": "VideoGetItem"}
             result, data = JSquery(request)[:2]
+            xbmc.log('Last played debug: data cua phim dang xem: ' + str(data))
             if(len(data)==0):
                 request = {"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "album", "artist", "duration", "thumbnail", "file", "fanart", "streamdetails"], "playerid": 0 }, "id": "AudioGetItem"}
                 result, data = JSquery(request)[:2]
             if len(data)>0:
                 item=data["item"]
+                subtitle_name = item["file"].rsplit('/', 1)[-1].rsplit('.', 1)[0]
+                xbmc.log('Last played debug: ten cua phim dang xem: ' + str(subtitle_name))
+                for filename in os.listdir(custom_subtitle_path):
+                    xbmc.log('Last played debug: ten cua file da tai: ' + filename)
+                    if filename == subtitle_name + ".vi.srt":
+                        xbmc.Player().setSubtitles(os.path.join(custom_subtitle_path, filename))
                 if enable_debug	== "true": xbmc.log("<<<plugin.video.last_played (start play) "+str(item), 3)
                 if "title" in item: lp.title = item["title"]
                 if lp.title=="" and "label" in item: lp.title = item["label"]		
@@ -292,6 +308,8 @@ class KodiPlayer(xbmc.Player):
                 if "type" in item: lp.type = item["type"]
                 if "file" in item: lp.file = item["file"]
                 if "artist" in item: lp.artist = item["artist"]
+        else:
+            xbmc.log('Last played debug: Ko co media')
 
 class KodiRunner:
     player = KodiPlayer()
