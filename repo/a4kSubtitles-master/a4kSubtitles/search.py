@@ -85,6 +85,7 @@ def __sanitize_results(core, meta, results):
     temp_dict = {}
 
     for result in results:
+        if result == None: continue
         temp_dict[result['action_args']['url']] = result
         result['name'] = core.utils.unquote(result['name'])
 
