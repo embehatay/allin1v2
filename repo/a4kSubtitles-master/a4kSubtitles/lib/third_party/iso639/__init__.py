@@ -2,7 +2,9 @@ from typing import Iterator
 
 from .datafile import load_langs
 from .iso639 import Lang
+import xbmc
 
+xbmc.log("********** Co vao den file init iso639 *********")
 Lang = Lang
 
 
@@ -15,5 +17,6 @@ def iter_langs() -> Iterator[Lang]:
         Lang instances ordered alphabetically by name
     """
     sorted_langs = load_langs()
+    xbmc.log("Sau khi doc pkl file: " + sorted_langs)
 
     return iter(sorted_langs)

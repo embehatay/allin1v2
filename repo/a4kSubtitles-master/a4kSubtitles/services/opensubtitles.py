@@ -110,8 +110,7 @@ def build_search_requests(core, service_name, meta):
 
     params = {
         'query': query,
-        # 'languages': ','.join(lang_ids),
-        'languages': "vi",
+        'languages': ','.join(lang_ids),
         'type': 'movie' if not meta.is_tvshow else 'episode',
     }
 
@@ -157,8 +156,7 @@ def parse_search_response(core, service_name, meta, response):
             return None
 
         filename = result['files'][0]['file_name']
-        # language = core.utils.get_lang_id(result['language'], core.kodi.xbmc.ENGLISH_NAME)
-        language = "Vietnamese"
+        language = core.utils.get_lang_id(result['language'], core.kodi.xbmc.ENGLISH_NAME)
 
         return {
             'service_name': service_name,
@@ -166,8 +164,7 @@ def parse_search_response(core, service_name, meta, response):
             'lang': language,
             'name': filename,
             'rating': int(round(float(result['ratings']) / 2)),
-            # 'lang_code': core.utils.get_lang_id(language, core.kodi.xbmc.ISO_639_1),
-            'lang_code': "vi",
+            'lang_code': core.utils.get_lang_id(language, core.kodi.xbmc.ISO_639_1),
             'sync': 'true' if result.get('moviehash_match', False) else 'false',
             'impaired': 'true' if result['hearing_impaired'] else 'false',
             'color': 'springgreen',

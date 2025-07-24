@@ -7,6 +7,7 @@ def __download(core, filepath, request):
     request['stream'] = True
     response = core.request.execute(core, request)
     if response.status_code >= 400:
+        core.logger.debug("Tai file that bai li do: " + str(response))
         raise Exception('Failed to download subtitle (HTTP: %s)' % response.status_code)
 
     with response as r:
@@ -132,14 +133,16 @@ def __postprocess(core, filepath, lang_code):
             f.write(text.encode(core.utils.default_encoding))
     except: pass
 
-def __copy_sub_local(core, subfile):
+def __copy_sub_local(core, subfile, lang_code):
     # Copy the subfile to local.
     if core.os.getenv('A4KSUBTITLES_TESTRUN') == 'true':
         return
 
     media_name = core.os.path.splitext(core.os.path.basename(core.kodi.xbmc.getInfoLabel('Player.Filename')))[0]
-    sub_name, lang_code, extension = core.os.path.basename(subfile).rsplit(".", 2)
-    lang_code = "vi"
+    try:
+        sub_name, lang_code, extension = core.os.path.basename(subfile).rsplit(".", 2)
+    except:
+        sub_name, extension = core.os.path.basename(subfile).rsplit(".", 1)
     file_dest, folder_dest = None, None
     if core.kodi.get_kodi_setting("subtitles.storagemode") == 0:
         folder_dest = core.kodi.xbmc.getInfoLabel('Player.Folderpath')
@@ -159,10 +162,8 @@ def download(core, params):
     core.kodi.xbmcvfs.mkdirs(core.utils.temp_dir)
 
     actions_args = params['action_args']
-    actions_args['lang'] = "Vietnamese"
-    # lang_code = core.utils.get_lang_id(actions_args['lang'], core.kodi.xbmc.ISO_639_2)
-    lang_code = "vi"
-    # filename = __insert_lang_code_in_filename(core, actions_args['filename'], lang_code)
+    lang_code = core.utils.get_lang_id(actions_args['lang'], core.kodi.xbmc.ISO_639_2)
+    filename = __insert_lang_code_in_filename(core, actions_args['filename'], lang_code)
     filename = actions_args['filename']
     filename = core.utils.slugify_filename(filename)
     filename = filename.strip()
@@ -188,7 +189,7 @@ def download(core, params):
     core.kodi.xbmcvfs.delete(core.utils.suspend_service_file)
 
     # if core.api_mode_enabled:
-    __copy_sub_local(core, filepath)
+    __copy_sub_local(core, filepath, lang_code)
 
     listitem = core.kodi.xbmcgui.ListItem(label=filepath, offscreen=True)
     core.kodi.xbmcplugin.addDirectoryItem(handle=core.handle, url=filepath, listitem=listitem, isFolder=False)

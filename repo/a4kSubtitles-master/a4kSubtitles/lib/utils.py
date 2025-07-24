@@ -10,8 +10,11 @@ from . import kodi
 from . import logger
 
 try:
-    from .third_party import chardet, iso639, gptsubtrans
-except: pass
+    # from .third_party import chardet, iso639, gptsubtrans
+    from .third_party import iso639
+except Exception as exc:
+        logger.debug("Exception import iso 639:  " + str(exc)) 
+        pass
 
 try:  # pragma: no cover
     from urlparse import unquote, parse_qsl
@@ -72,6 +75,7 @@ def get_lang_id(language, lang_format):
         return ''
 
 def get_lang_ids(languages, lang_format=kodi.xbmc.ISO_639_2):
+    logger.debug("languages truyen qua day: " + str(languages))
     try:
         lang_ids = []
         for language in languages:
@@ -99,7 +103,8 @@ def get_lang_ids(languages, lang_format=kodi.xbmc.ISO_639_2):
                 lang_ids.append(lang_id)
 
         return lang_ids
-    except:
+    except Exception as exc:
+        logger.debug("Exception get lang ids:  " + str(exc))
         return []
 
 def get_subfile_from_temp_dir():
