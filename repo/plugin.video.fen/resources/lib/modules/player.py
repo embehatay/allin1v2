@@ -356,10 +356,12 @@ class Subtitles(xbmc_player):
 
 		def get_jsonrpc(request):
 			response = xbmc.executeJSONRPC(json.dumps(request))
+			logger("CÓ vào hàm get_jsonrpc", str(response))
 			result = json.loads(response)
 			return result.get('result', None)
 
 		def jsonrpc_get_system_setting(setting_id, setting_value=''):
+			logger("Có vào hàm ", "jsonrpc_get_system_setting")
 			command = {'jsonrpc': '2.0', 'id': 1, 'method': 'Settings.GetSettingValue', 'params': {'setting': setting_id}}
 			try: result = get_jsonrpc(command)['value']
 			except Exception as e: 
