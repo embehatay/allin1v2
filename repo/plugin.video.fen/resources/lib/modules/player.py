@@ -6,6 +6,7 @@ from apis.opensubtitles_api import OpenSubtitlesAPI
 from apis.trakt_api import make_trakt_slug
 from modules import kodi_utils as ku, settings as st, watched_status as ws
 from modules.utils import sec2time
+import xbmc
 logger = ku.logger
 
 set_property, clear_property, convert_language, get_visibility, hide_busy_dialog = ku.set_property, ku.clear_property, ku.convert_language, ku.get_visibility, ku.hide_busy_dialog
@@ -323,6 +324,7 @@ class Subtitles(xbmc_player):
 		logger("Bắt đầu hàm get subtitle", "hihi")
 		def _notification(line, _time=3500):
 			return notification(line, _time)
+		_notification(33192, 1500)
 		def _video_file_subs():
 			try: available_sub_language = self.getSubtitles()
 			except: available_sub_language = ''
@@ -351,6 +353,20 @@ class Subtitles(xbmc_player):
 				else:
 					_notification(32793, 2000)
 			return False
+
+		def get_jsonrpc(request):
+			response = xbmc.executeJSONRPC(json.dumps(request))
+			result = json.loads(response)
+			return result.get('result', None)
+
+		def jsonrpc_get_system_setting(setting_id, setting_value=''):
+			command = {'jsonrpc': '2.0', 'id': 1, 'method': 'Settings.GetSettingValue', 'params': {'setting': setting_id}}
+			try: result = get_jsonrpc(command)['value']
+			except Exception as e: 
+				logger("Lấy setting từ jsonrpc fail", str(e))
+				result = setting_value
+			return result
+
 		def _searched_subs():
 			chosen_sub = None
 			result = self.os.search(query, imdb_id, self.language, season, episode)
@@ -397,14 +413,13 @@ class Subtitles(xbmc_player):
 		sleep(2500)
 		imdb_id = re.sub(r'[^0-9]', '', imdb_id)
 		# subtitle_path = translate_path('special://temp/')
-		subtitle_path = translate_path(ku.jsonrpc_get_system_setting("subtitles.custompath"))
+		subtitle_path = translate_path(jsonrpc_get_system_setting("subtitles.custompath"))
 		logger("Đường dẫN subtile custom: ", subtitle_path)
 		sub_filename = 'FENSubs_%s_%s_%s' % (imdb_id, season, episode) if season else 'FENSubs_%s' % imdb_id
 		# search_filename = sub_filename + '_%s.srt' % self.language
 		search_filename = url.rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % self.language
 		# subtitle = _video_file_subs()
 		# if subtitle: return
-		_notification(33192, 1500)
 		subtitle = _downloaded_subs()
 		if subtitle: return self.setSubtitles(subtitle)
 		# subtitle = _searched_subs()
