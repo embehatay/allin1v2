@@ -396,6 +396,7 @@ class Subtitles(xbmc_player):
 		imdb_id = re.sub(r'[^0-9]', '', imdb_id)
 		# subtitle_path = translate_path('special://temp/')
 		subtitle_path = translate_path(ku.jsonrpc_get_system_setting("subtitles.custompath"))
+		logger("Đường dẫN subtile custom: ", subtitle_path)
 		sub_filename = 'FENSubs_%s_%s_%s' % (imdb_id, season, episode) if season else 'FENSubs_%s' % imdb_id
 		# search_filename = sub_filename + '_%s.srt' % self.language
 		search_filename = url.rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % self.language
