@@ -245,9 +245,8 @@ class FenPlayer(xbmc_player):
 
 	def run_subtitles(self):
 		self.subs_searched = True
-		# try: Thread(target=Subtitles().get, args=(self.title, self.imdb_id, self.season or None, self.episode or None, self.url)).start()
-		# except: pass
-		Subtitles().get(self.title, self.imdb_id, self.season or None, self.episode or None, self.url)
+		try: Thread(target=Subtitles().get, args=(self.title, self.imdb_id, self.season or None, self.episode or None, self.url)).start()
+		except: pass
 
 	def set_resume_point(self, listitem):
 		if self.playback_percent > 0.0: listitem.setProperty('StartPercent', str(self.playback_percent))
@@ -354,21 +353,6 @@ class Subtitles(xbmc_player):
 					_notification(32793, 2000)
 			return False
 
-		def get_jsonrpc(request):
-			response = xbmc.executeJSONRPC(json.dumps(request))
-			logger("CÓ vào hàm get_jsonrpc", str(response))
-			result = json.loads(response)
-			return result.get('result', None)
-
-		def jsonrpc_get_system_setting(setting_id, setting_value=''):
-			logger("Có vào hàm ", "jsonrpc_get_system_setting")
-			command = {'jsonrpc': '2.0', 'id': 1, 'method': 'Settings.GetSettingValue', 'params': {'setting': setting_id}}
-			try: result = get_jsonrpc(command)['value']
-			except Exception as e: 
-				logger("Lấy setting từ jsonrpc fail", str(e))
-				result = setting_value
-			return result
-
 		def _searched_subs():
 			chosen_sub = None
 			result = self.os.search(query, imdb_id, self.language, season, episode)
@@ -416,8 +400,8 @@ class Subtitles(xbmc_player):
 		imdb_id = re.sub(r'[^0-9]', '', imdb_id)
 		logger("Imdb id của phim này: ", str(imdb_id))
 		# subtitle_path = translate_path('special://temp/')
-		subtitle_path = translate_path(jsonrpc_get_system_setting("subtitles.custompath"))
-		logger("Đường dẫN subtile custom: ", subtitle_path)
+		subtitle_path = translate_path(ku.jsonrpc_get_system_setting("subtitles.custompath"))
+		logger("Đường dẫn subtile custom: ", subtitle_path)
 		sub_filename = 'FENSubs_%s_%s_%s' % (imdb_id, season, episode) if season else 'FENSubs_%s' % imdb_id
 		# search_filename = sub_filename + '_%s.srt' % self.language
 		search_filename = url.rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % self.language
