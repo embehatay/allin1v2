@@ -320,6 +320,7 @@ class Subtitles(xbmc_player):
 		self.quality = ['bluray', 'hdrip', 'brrip', 'bdrip', 'dvdrip', 'webdl', 'webrip', 'webcap', 'web', 'hdtv', 'hdrip']
 
 	def get(self, query, imdb_id, season, episode, url, secondary_search=False):
+		logger("Bắt đầu hàm get subtitle", "hihi")
 		def _notification(line, _time=3500):
 			return notification(line, _time)
 		def _video_file_subs():

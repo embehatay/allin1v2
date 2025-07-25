@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<addons><addon id="plugin.video.fen" name="Fen" provider-name="Tikipeter" version="3.5.07">
+<addons><addon id="plugin.video.fen" name="Fen" provider-name="Tikipeter" version="3.5.08">
     <requires>
         <import addon="xbmc.python" version="3.0.0" />
         <import addon="script.module.requests" version="2.19.1" />
@@ -50,7 +50,7 @@
 			<icon>icon.png</icon>
 		</assets>
 	</extension>
-</addon><addon id="script.module.cocoscrapers" name="CocoScrapers Module" version="1.0.38" provider-name="CocoJoe">
+</addon><addon id="script.module.cocoscrapers" name="CocoScrapers Module" version="1.0.39" provider-name="CocoJoe">
 	<requires>
 		<import addon="xbmc.python" version="3.0.0" />
 		<import addon="script.module.requests" />
