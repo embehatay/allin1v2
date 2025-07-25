@@ -24,6 +24,7 @@ class FenPlayer(xbmc_player):
 		xbmc_player.__init__(self)
 
 	def onPlayBackStarted(self) -> None:
+		logger("Chạy vào hàm bắt đầu play back", "on playback paused")
 		self.run_subtitles()
 
 	def onPlayBackPaused(self) -> None:

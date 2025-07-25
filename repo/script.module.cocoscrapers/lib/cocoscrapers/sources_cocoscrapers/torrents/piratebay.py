@@ -12,7 +12,6 @@ from cocoscrapers.modules import log_utils
 from time import time
 
 class source:
-	log_utils = log_utils
 	priority = 2
 	pack_capable = True
 	hasMovies = True
