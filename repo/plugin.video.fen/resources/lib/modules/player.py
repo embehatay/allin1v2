@@ -8,6 +8,7 @@ from modules import kodi_utils as ku, settings as st, watched_status as ws
 from modules.utils import sec2time
 import xbmc
 logger = ku.logger
+from urllib.parse import unquote
 
 set_property, clear_property, convert_language, get_visibility, hide_busy_dialog = ku.set_property, ku.clear_property, ku.convert_language, ku.get_visibility, ku.hide_busy_dialog
 Thread, json, ls, xbmc_player, translate_path, execute_builtin, sleep = ku.Thread, ku.json, ku.local_string, ku.xbmc_player, ku.translate_path, ku.execute_builtin, ku.sleep
@@ -409,7 +410,7 @@ class Subtitles(xbmc_player):
 		logger("Đường dẫn subtile custom: ", subtitle_path)
 		sub_filename = 'FENSubs_%s_%s_%s' % (imdb_id, season, episode) if season else 'FENSubs_%s' % imdb_id
 		# search_filename = sub_filename + '_%s.srt' % self.language
-		search_filename = url.rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % self.language
+		search_filename = unquote(url).rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % self.language
 		# subtitle = _video_file_subs()
 		# if subtitle: return
 		subtitle = _downloaded_subs()
