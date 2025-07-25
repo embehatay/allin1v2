@@ -244,8 +244,9 @@ class FenPlayer(xbmc_player):
 
 	def run_subtitles(self):
 		self.subs_searched = True
-		try: Thread(target=Subtitles().get, args=(self.title, self.imdb_id, self.season or None, self.episode or None, self.url)).start()
-		except: pass
+		# try: Thread(target=Subtitles().get, args=(self.title, self.imdb_id, self.season or None, self.episode or None, self.url)).start()
+		# except: pass
+		Subtitles().get(self.title, self.imdb_id, self.season or None, self.episode or None, self.url)
 
 	def set_resume_point(self, listitem):
 		if self.playback_percent > 0.0: listitem.setProperty('StartPercent', str(self.playback_percent))
