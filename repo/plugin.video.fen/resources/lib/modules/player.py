@@ -99,6 +99,7 @@ class FenPlayer(xbmc_player):
 				total_check_time += 0.25
 			hide_busy_dialog()
 			sleep(1000)
+			pass_time = 0.0
 			while self.isPlayingVideo():
 				try:
 					try: self.total_time, self.curr_time = self.getTotalTime(), self.getTime()
@@ -114,6 +115,10 @@ class FenPlayer(xbmc_player):
 					if self.autoplay_nextep:
 						if not self.nextep_info_gathered: self.info_next_ep()
 						if round(self.total_time - self.curr_time) <= self.start_prep: self.run_next_ep(); break
+					if self.curr_time - pass_time > 10:
+						logger("total time: " + str(self.getTotalTime()), "current time: " + str(self.getTime()))
+						pass_time = self.curr_time
+						self.media_watched_marker()
 					# if not self.subs_searched: self.run_subtitles()
 				except: pass
 			hide_busy_dialog()
@@ -223,10 +228,10 @@ class FenPlayer(xbmc_player):
 				Thread(target=self.run_media_progress, args=(watched_function, watched_params)).start()
 			else:
 				clear_property('fen.random_episode_history')
-				if self.current_point >= self.set_resume:
-					progress_params = {'media_type': self.media_type, 'tmdb_id': self.tmdb_id, 'curr_time': self.curr_time, 'total_time': self.total_time,
-									'title': self.title, 'season': self.season, 'episode': self.episode, 'from_playback': 'true'}
-					Thread(target=self.run_media_progress, args=(set_bookmark, progress_params)).start()
+				# if self.current_point >= self.set_resume:
+				progress_params = {'media_type': self.media_type, 'tmdb_id': self.tmdb_id, 'curr_time': self.curr_time, 'total_time': self.total_time,
+								'title': self.title, 'season': self.season, 'episode': self.episode, 'from_playback': 'true'}
+				Thread(target=self.run_media_progress, args=(set_bookmark, progress_params)).start()
 		except: pass
 
 	def run_media_progress(self, function, params):

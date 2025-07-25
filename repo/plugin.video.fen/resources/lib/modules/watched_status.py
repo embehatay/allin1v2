@@ -5,7 +5,7 @@ from caches.main_cache import main_cache, timedelta
 from caches.trakt_cache import clear_trakt_collection_watchlist_data
 from modules import kodi_utils, settings, metadata
 from modules.utils import get_datetime, adjust_premiered_date, sort_for_article, make_thread_list
-# logger = kodi_utils.logger
+logger = kodi_utils.logger
 
 ls, database, notification, kodi_refresh = kodi_utils.local_string, kodi_utils.database, kodi_utils.notification, kodi_utils.kodi_refresh
 sleep, progress_dialog, Thread, get_video_database_path = kodi_utils.sleep, kodi_utils.progress_dialog, kodi_utils.Thread, kodi_utils.get_video_database_path
@@ -121,6 +121,7 @@ def batch_erase_bookmark(watched_indicators, insert_list, action):
 
 def set_bookmark(params):
 	try:
+		logger("Bắt đầu thêm book mark", str(params))
 		media_type, tmdb_id, curr_time, total_time = params.get('media_type'), params.get('tmdb_id'), params.get('curr_time'), params.get('total_time')
 		refresh = False if params.get('from_playback', 'false') == 'true' else True
 		title, season, episode = params.get('title'), params.get('season'), params.get('episode')
@@ -136,6 +137,7 @@ def set_bookmark(params):
 			last_played = get_last_played_value(data_base)
 			dbcon = make_database_connection(data_base)
 			dbcur = set_PRAGMAS(dbcon)
+			logger("Chạy vào thêm bookmark vào DB", "hihi")
 			dbcur.execute("INSERT OR REPLACE INTO progress VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 						(media_type, tmdb_id, season, episode, str(resume_point), str(curr_time), last_played, 0, title))
 		refresh_container(refresh)
@@ -203,6 +205,7 @@ def get_in_progress_episodes():
 	if lists_sort_order('progress') == 0: data = sort_for_article(data, 5, ignore_articles())
 	else: data.sort(key=lambda k: k[4], reverse=True)
 	episode_list = [{'media_ids': {'tmdb': i[0]}, 'season': int(i[1]), 'episode': int(i[2]), 'resume_point': float(i[3])} for i in data]
+	logger("In progress episodes lay tu db: ", str(episode_list))
 	return episode_list
 
 def get_watched_items(media_type, page_no):
