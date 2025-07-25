@@ -2715,6 +2715,26 @@
 					</dependencies>
 					<control type="toggle"/>
 				</setting>
+				<setting id="subtitles.opensubtitles.username" type="string" label="33191" help="">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="edit" format="string">
+						<heading>32056</heading>
+					</control>
+				</setting>
+				<setting id="subtitles.opensubtitles.password" type="string" label="33191" help="">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="edit" format="string">
+						<heading>32052</heading>
+					</control>
+				</setting>
 			</group>
 		</category>
 		<!-- Misc & Hidden -->

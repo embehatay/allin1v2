@@ -23,14 +23,19 @@ class FenPlayer(xbmc_player):
 	def __init__ (self):
 		xbmc_player.__init__(self)
 
+	def onPlayBackStarted(self) -> None:
+		self.run_subtitles()
+
 	def onPlayBackPaused(self) -> None:
 		logger("Chạy vào hàm dừng play back", "on playback paused")
 		self.media_watched_marker()
 
 	def run(self, url=None, obj=None):
+		logger("Url dang xem: ", str(url))
 		hide_busy_dialog()
 		self.clear_playback_properties()
 		if not url: return self.run_error()
+		self.url = url
 		try: return self.play_video(url, obj)
 		except: return self.run_error()
 
@@ -107,7 +112,7 @@ class FenPlayer(xbmc_player):
 					if self.autoplay_nextep:
 						if not self.nextep_info_gathered: self.info_next_ep()
 						if round(self.total_time - self.curr_time) <= self.start_prep: self.run_next_ep(); break
-					if not self.subs_searched: self.run_subtitles()
+					# if not self.subs_searched: self.run_subtitles()
 				except: pass
 			hide_busy_dialog()
 			if not self.media_marked: self.media_watched_marker()
@@ -238,7 +243,7 @@ class FenPlayer(xbmc_player):
 
 	def run_subtitles(self):
 		self.subs_searched = True
-		try: Thread(target=Subtitles().get, args=(self.title, self.imdb_id, self.season or None, self.episode or None)).start()
+		try: Thread(target=Subtitles().get, args=(self.title, self.imdb_id, self.season or None, self.episode or None, self.url)).start()
 		except: pass
 
 	def set_resume_point(self, listitem):
@@ -309,9 +314,10 @@ class Subtitles(xbmc_player):
 		self.auto_enable = get_setting('fen.subtitles.auto_enable')
 		self.subs_action = get_setting('fen.subtitles.subs_action')
 		self.language = get_setting('fen.subtitles.language_primary')
+		if self.language == "vie": self.language = "vi"
 		self.quality = ['bluray', 'hdrip', 'brrip', 'bdrip', 'dvdrip', 'webdl', 'webrip', 'webcap', 'web', 'hdtv', 'hdrip']
 
-	def get(self, query, imdb_id, season, episode, secondary_search=False):
+	def get(self, query, imdb_id, season, episode, url, secondary_search=False):
 		def _notification(line, _time=3500):
 			return notification(line, _time)
 		def _video_file_subs():
@@ -324,11 +330,13 @@ class Subtitles(xbmc_player):
 			return False
 		def _downloaded_subs():
 			files = list_dirs(subtitle_path)[1]
+			logger("Danh sach thu muc va file: ", str(files))
 			if len(files) > 0:
 				match_lang1 = None
 				match_lang2 = None
 				files = [i for i in files if i.endswith('.srt')]
 				for item in files:
+					logger("So sanh de tim ra file sub: " + search_filename, item)
 					if item == search_filename:
 						match_lang1 = item
 						break
@@ -337,6 +345,8 @@ class Subtitles(xbmc_player):
 					subtitle = os.path.join(subtitle_path, final_match)
 					_notification(32792)
 					return subtitle
+				else:
+					_notification(32793, 2000)
 			return False
 		def _searched_subs():
 			chosen_sub = None
@@ -383,17 +393,19 @@ class Subtitles(xbmc_player):
 		if self.subs_action == '2': return
 		sleep(2500)
 		imdb_id = re.sub(r'[^0-9]', '', imdb_id)
-		subtitle_path = translate_path('special://temp/')
+		# subtitle_path = translate_path('special://temp/')
+		subtitle_path = translate_path(ku.jsonrpc_get_system_setting("subtitles.custompath"))
 		sub_filename = 'FENSubs_%s_%s_%s' % (imdb_id, season, episode) if season else 'FENSubs_%s' % imdb_id
-		search_filename = sub_filename + '_%s.srt' % self.language
-		subtitle = _video_file_subs()
-		if subtitle: return
+		# search_filename = sub_filename + '_%s.srt' % self.language
+		search_filename = url.rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % self.language
+		# subtitle = _video_file_subs()
+		# if subtitle: return
 		subtitle = _downloaded_subs()
 		if subtitle: return self.setSubtitles(subtitle)
-		subtitle = _searched_subs()
-		if subtitle: return self.setSubtitles(subtitle)
-		if secondary_search: return _notification(32793)
-		secondary_language = get_setting('fen.subtitles.language_secondary')
-		if secondary_language in (self.language, None, 'None', ''): return _notification(32793)
-		self.language = secondary_language
-		self.get(query, imdb_id, season, episode, secondary_search=True)
+		# subtitle = _searched_subs()
+		# if subtitle: return self.setSubtitles(subtitle)
+		# if secondary_search: return _notification(32793)
+		# secondary_language = get_setting('fen.subtitles.language_secondary')
+		# if secondary_language in (self.language, None, 'None', ''): return _notification(32793)
+		# self.language = secondary_language
+		# self.get(query, imdb_id, season, episode, secondary_search=True)
