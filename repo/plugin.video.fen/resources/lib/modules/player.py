@@ -412,8 +412,9 @@ class Subtitles(xbmc_player):
 			sleep(1000)
 			return subtitle
 		if self.subs_action == '2': return
-		sleep(2500)
+		# sleep(2500)
 		imdb_id = re.sub(r'[^0-9]', '', imdb_id)
+		logger("Imdb id của phim này: ", str(imdb_id))
 		# subtitle_path = translate_path('special://temp/')
 		subtitle_path = translate_path(jsonrpc_get_system_setting("subtitles.custompath"))
 		logger("Đường dẫN subtile custom: ", subtitle_path)
