@@ -400,6 +400,7 @@ class Subtitles(xbmc_player):
 		search_filename = url.rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % self.language
 		# subtitle = _video_file_subs()
 		# if subtitle: return
+		_notification(33192, 1500)
 		subtitle = _downloaded_subs()
 		if subtitle: return self.setSubtitles(subtitle)
 		# subtitle = _searched_subs()
