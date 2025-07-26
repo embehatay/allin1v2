@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from urllib.parse import unquote
 subtitles_exts = ['.srt', '.sub']
 subtitles_exts_secondary = ['.smi', '.ssa', '.aqt', '.jss', '.ass', '.rt']
 subtitles_exts_all = subtitles_exts + subtitles_exts_secondary
@@ -135,10 +136,11 @@ def __postprocess(core, filepath, lang_code):
 
 def __copy_sub_local(core, subfile, lang_code):
     # Copy the subfile to local.
+    core.logger.debug("lang code khi lưu vào ổ D: " + str(lang_code))
     if core.os.getenv('A4KSUBTITLES_TESTRUN') == 'true':
         return
 
-    media_name = core.os.path.splitext(core.os.path.basename(core.kodi.xbmc.getInfoLabel('Player.Filename')))[0]
+    media_name = unquote(core.os.path.splitext(core.os.path.basename(core.kodi.xbmc.getInfoLabel('Player.Filename')))[0])
     try:
         sub_name, lang_code, extension = core.os.path.basename(subfile).rsplit(".", 2)
     except:
@@ -163,8 +165,8 @@ def download(core, params):
 
     actions_args = params['action_args']
     lang_code = core.utils.get_lang_id(actions_args['lang'], core.kodi.xbmc.ISO_639_2)
+    core.logger.debug("Lang code khi bắt đầu download: " + lang_code)
     filename = __insert_lang_code_in_filename(core, actions_args['filename'], lang_code)
-    filename = actions_args['filename']
     filename = core.utils.slugify_filename(filename)
     filename = filename.strip()
     archivepath = core.os.path.join(core.utils.temp_dir, 'sub.zip')

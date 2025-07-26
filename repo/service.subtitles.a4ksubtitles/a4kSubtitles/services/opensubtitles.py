@@ -107,6 +107,7 @@ def build_search_requests(core, service_name, meta):
         query = '%s %s' % (meta.title, meta.year)
 
     lang_ids = core.utils.get_lang_ids(meta.languages, core.kodi.xbmc.ISO_639_1)
+    # lang_ids = core.utils.get_lang_ids(meta.languages, core.kodi.xbmc.ISO_639_2)
 
     params = {
         'query': query,

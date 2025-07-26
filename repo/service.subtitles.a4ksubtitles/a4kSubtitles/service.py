@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 
 def start(api):
     core = api.core
@@ -264,13 +265,15 @@ def start(api):
         best_match_sub = results[0]
         for result in results:
             current_score = 0
-            if "720p" or "1080p" or "2160p" in result["name"]: current_score += 1
-            if "bluray" in result["name"]: current_score += 2
+            if re.search('720p', result["name"], re.IGNORECASE): current_score += 1
+            if re.search('1080p', result["name"], re.IGNORECASE): current_score += 2
+            if re.search('2160p', result["name"], re.IGNORECASE): current_score += 3
+            if re.search('bluray', result["name"], re.IGNORECASE): current_score += 4
             if current_score > score: 
                 score = current_score
                 best_match_sub = result
-            if current_score == 3: break
 
+        core.logger.debug("File co diem cao nhat: " + str(score) + "|||||" + str(best_match_sub))
         try:
             subfile = api.download(best_match_sub)
             last_subfile = subfile

@@ -102,6 +102,7 @@ def get_lang_ids(languages, lang_format=kodi.xbmc.ISO_639_2):
             if lang_id is not None:
                 lang_ids.append(lang_id)
 
+        logger.debug("languages sau khi tìm theo chuẩn iso: " + str(lang_ids))
         return lang_ids
     except Exception as exc:
         logger.debug("Exception get lang ids:  " + str(exc))
