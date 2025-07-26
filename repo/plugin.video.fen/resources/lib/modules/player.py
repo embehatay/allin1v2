@@ -29,10 +29,6 @@ class FenPlayer(xbmc_player):
 		logger("Chạy vào hàm bắt đầu play back", "on playback paused")
 		self.run_subtitles()
 
-	def onPlayBackPaused(self) -> None:
-		logger("Chạy vào hàm dừng play back", "on playback paused")
-		self.media_watched_marker()
-
 	def run(self, url=None, obj=None):
 		logger("Url dang xem: ", str(url))
 		hide_busy_dialog()
@@ -322,7 +318,6 @@ class Subtitles(xbmc_player):
 		self.auto_enable = get_setting('fen.subtitles.auto_enable')
 		self.subs_action = get_setting('fen.subtitles.subs_action')
 		self.language = get_setting('fen.subtitles.language_primary')
-		if self.language == "vie": self.language = "vi"
 		self.quality = ['bluray', 'hdrip', 'brrip', 'bdrip', 'dvdrip', 'webdl', 'webrip', 'webcap', 'web', 'hdtv', 'hdrip']
 
 	def get(self, query, imdb_id, season, episode, url, secondary_search=False):
