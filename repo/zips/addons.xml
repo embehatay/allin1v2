@@ -49,7 +49,7 @@
 		</assets>
 		<news />
 	</extension>
-</addon><addon id="service.subtitles.a4ksubtitles" name="a4kSubtitles" version="3.21.12" provider-name="Unknown">
+</addon><addon id="service.subtitles.a4ksubtitles" name="a4kSubtitles" version="3.21.13" provider-name="Unknown">
     <requires>
       <import addon="script.module.requests" />
       <import addon="vfs.libarchive" optional="true" />
