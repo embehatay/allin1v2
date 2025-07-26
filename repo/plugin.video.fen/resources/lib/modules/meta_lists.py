@@ -90,7 +90,7 @@ language_choices =  {
 'Slovenian': 'slv',          'Spanish': 'spa',              'Swahili': 'swa',              'Swedish': 'swe',
 'Syriac': 'syr',             'Tagalog': 'tgl',              'Tamil': 'tam',                'Telugu': 'tel',
 'Thai': 'tha',               'Turkish': 'tur',              'Ukrainian': 'ukr',            'Urdu': 'urd',
-'Vietnamese': 'vi'
+'Vietnamese': 'vie'
 	}
 
 regions = [
