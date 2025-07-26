@@ -333,16 +333,19 @@ class Subtitles(xbmc_player):
 				_notification(32852)
 				return True
 			return False
-		def _downloaded_subs():
+		def _downloaded_subs(url):
 			files = list_dirs(subtitle_path)[1]
 			logger("Danh sach thu muc va file: ", str(files))
 			if len(files) > 0:
 				match_lang1 = None
 				match_lang2 = None
 				files = [i for i in files if i.endswith('.srt')]
+				if self.language == "vi" or "vie":
+					search_filename_vi = unquote(url).rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % "vi"
+					search_filename_vie = unquote(url).rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % "vie"
 				for item in files:
-					logger("So sanh de tim ra file sub: " + search_filename, item)
-					if item == search_filename:
+					logger("So sanh de tim ra file sub: " + search_filename_vi + "|" + search_filename_vie , item)
+					if item == search_filename_vi or search_filename_vie:
 						match_lang1 = item
 						break
 				final_match = match_lang1 or match_lang2 or None
@@ -405,10 +408,9 @@ class Subtitles(xbmc_player):
 		logger("Đường dẫn subtile custom: ", subtitle_path)
 		sub_filename = 'FENSubs_%s_%s_%s' % (imdb_id, season, episode) if season else 'FENSubs_%s' % imdb_id
 		# search_filename = sub_filename + '_%s.srt' % self.language
-		search_filename = unquote(url).rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % self.language
 		# subtitle = _video_file_subs()
 		# if subtitle: return
-		subtitle = _downloaded_subs()
+		subtitle = _downloaded_subs(url)
 		if subtitle: return self.setSubtitles(subtitle)
 		# subtitle = _searched_subs()
 		# if subtitle: return self.setSubtitles(subtitle)
