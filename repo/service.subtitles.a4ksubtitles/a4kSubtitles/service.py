@@ -49,6 +49,7 @@ def start(api):
         # In-case episode changed.
         if has_video:
             playing_filename = core.kodi.xbmc.getInfoLabel('Player.Filenameandpath')
+            core.logger.debug('File dang xem: ' + str(playing_filename))
             if prev_playing_filename != playing_filename:
                 reset()
                 prev_playing_filename = playing_filename

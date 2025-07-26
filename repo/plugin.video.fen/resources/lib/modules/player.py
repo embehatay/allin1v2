@@ -345,7 +345,7 @@ class Subtitles(xbmc_player):
 					search_filename_vie = unquote(url).rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % "vie"
 				for item in files:
 					logger("So sanh de tim ra file sub: " + search_filename_vi + "|" + search_filename_vie , item)
-					if item == search_filename_vi or search_filename_vie:
+					if item == search_filename_vi or item == search_filename_vie:
 						match_lang1 = item
 						break
 				final_match = match_lang1 or match_lang2 or None
