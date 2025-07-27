@@ -326,12 +326,14 @@ class Subtitles(xbmc_player):
 			return notification(line, _time)
 		_notification(33192, 1500)
 		def _video_file_subs():
+			_notification("Thử tìm sub nhúng trước", 1500)
 			try: available_sub_language = self.getSubtitles()
 			except: available_sub_language = ''
 			if available_sub_language == self.language:
-				if self.auto_enable == 'true': self.showSubtitles(True)
-				_notification(32852)
-				return True
+				if self.auto_enable == 'true':
+					self.showSubtitles(True)
+					_notification("Có sub nhúng tiếng " + self.language, 1500)
+					return True
 			return False
 		def _downloaded_subs(url):
 			files = list_dirs(subtitle_path)[1]
@@ -411,6 +413,7 @@ class Subtitles(xbmc_player):
 			final_path = os.path.join(subtitle_path, final_filename)
 			subtitle = self.os.download(chosen_sub, subtitle_path, temp_zip, temp_path, final_path)
 			if not subtitle: _notification("Không tìm thấy sub từ opensubtiles.com", 3000)
+			_notification("Có sub: " + str(subtitle))
 			sleep(1000)
 			return subtitle
 		if self.subs_action == '2': return
@@ -422,8 +425,8 @@ class Subtitles(xbmc_player):
 		# logger("Đường dẫn subtile custom: ", subtitle_path)
 		sub_filename = 'FENSubs_%s_%s_%s' % (tmdb_id, season, episode) if season else 'FENSubs_%s' % tmdb_id
 		search_filename = sub_filename + '.%s.srt' % self.language
-		# subtitle = _video_file_subs()
-		# if subtitle: return
+		subtitle = _video_file_subs()
+		if subtitle: return
 		subtitle = _downloaded_subs(url)
 		if subtitle: return self.setSubtitles(subtitle)
 		subtitle = _searched_subs()
