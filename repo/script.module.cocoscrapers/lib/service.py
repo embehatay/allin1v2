@@ -6,6 +6,10 @@
 import xbmc
 from cocoscrapers.modules import control
 from cocoscrapers.modules.Thread_pool import shutdown_executor
+import requests
+import urllib3.util.connection
+
+urllib3.util.connection.HAS_IPV6 = False
 window = control.homeWindow
 LOGINFO = 1 # (LOGNOTICE(2) deprecated in 19, use LOGINFO(1))
 

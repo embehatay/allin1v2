@@ -247,7 +247,7 @@ class FenPlayer(xbmc_player):
 
 	def run_subtitles(self):
 		self.subs_searched = True
-		try: Thread(target=Subtitles().get, args=(self.title, self.imdb_id, self.season or None, self.episode or None, self.url)).start()
+		try: Thread(target=Subtitles().get, args=(self.title, self.tmdb_id, self.season or None, self.episode or None, self.url)).start()
 		except: pass
 
 	def set_resume_point(self, listitem):
@@ -320,8 +320,8 @@ class Subtitles(xbmc_player):
 		self.language = get_setting('fen.subtitles.language_primary')
 		self.quality = ['bluray', 'hdrip', 'brrip', 'bdrip', 'dvdrip', 'webdl', 'webrip', 'webcap', 'web', 'hdtv', 'hdrip']
 
-	def get(self, query, imdb_id, season, episode, url, secondary_search=False):
-		logger("Bắt đầu hàm get subtitle", "hihi")
+	def get(self, query, tmdb_id, season, episode, url, secondary_search=False):
+		logger("Bắt đầu hàm get subtitle subaction", str(self.subs_action))
 		def _notification(line, _time=3500):
 			return notification(line, _time)
 		_notification(33192, 1500)
@@ -340,12 +340,9 @@ class Subtitles(xbmc_player):
 				match_lang1 = None
 				match_lang2 = None
 				files = [i for i in files if i.endswith('.srt')]
-				if self.language == "vi" or "vie":
-					search_filename_vi = unquote(url).rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % "vi"
-					search_filename_vie = unquote(url).rsplit("/", 1)[1].rsplit(".", 1)[0] + '.%s.srt' % "vie"
 				for item in files:
-					logger("So sanh de tim ra file sub: " + search_filename_vi + "|" + search_filename_vie , item)
-					if item == search_filename_vi or item == search_filename_vie:
+					logger("So sanh de tim ra file sub: " + search_filename, item)
+					if item == search_filename:
 						match_lang1 = item
 						break
 				final_match = match_lang1 or match_lang2 or None
@@ -355,65 +352,82 @@ class Subtitles(xbmc_player):
 					return subtitle
 				else:
 					_notification(32793, 2000)
+			else:
+				_notification(32793, 2000)
 			return False
 
 		def _searched_subs():
+			notification("Bắt đầu tìm sub trên opensubtitles.com !!!", 2000)
 			chosen_sub = None
-			result = self.os.search(query, imdb_id, self.language, season, episode)
-			if not result or len(result) == 0: return False
+			results = self.os.search(query, tmdb_id, self.language, season, episode)
+			if not results or len(results) == 0: return False
 			try: video_path = self.getPlayingFile()
 			except: video_path = ''
 			if '|' in video_path: video_path = video_path.split('|')[0]
 			video_path = os.path.basename(video_path)
 			if self.subs_action == '1':
 				self.pause()
-				choices = [i for i in result if i['SubLanguageID'] == self.language and i['SubSumCD'] == '1']
-				if len(choices) == 0: return False
-				dialog_list = ['[B]%s[/B] | [I]%s[/I]' % (i['SubLanguageID'].upper(), i['MovieReleaseName']) for i in choices]
+				# choices = [i for i in result if i['SubLanguageID'] == self.language and i['SubSumCD'] == '1']
+				# if len(choices) == 0: return False
+				dialog_list = ['[B]%s[/B] | [I]%s[/I]' % (self.language.upper(), i['attributes']['release']) for i in results]
 				list_items = [{'line1': item} for item in dialog_list]
 				kwargs = {'items': json.dumps(list_items), 'heading': video_path.replace('%20', ' '), 'enumerate': 'true', 'narrow_window': 'true'}
-				chosen_sub = select_dialog(choices, **kwargs)
+				chosen_sub = select_dialog(results, **kwargs)
 				self.pause()
 				if not chosen_sub: return False
 			else:
-				try: chosen_sub = [i for i in result if i['MovieReleaseName'].lower() in video_path.lower() and i['SubLanguageID'] == self.language and i['SubSumCD'] == '1'][0]
-				except: pass
+				# try: chosen_sub = [i for i in results if i['attributes']['release'].lower() in video_path.lower()][0]
+				# except: pass
 				if not chosen_sub:
-					fmt = re.split(r'\.|\(|\)|\[|\]|\s|\-', video_path)
-					fmt = [i.lower() for i in fmt]
-					fmt = [i for i in fmt if i in self.quality]
-					if season and fmt == '': fmt = 'hdtv'
-					result = [i for i in result if i['SubSumCD'] == '1']
-					filter = [i for i in result if i['SubLanguageID'] == self.language \
-												and any(x in i['MovieReleaseName'].lower() for x in fmt) and any(x in i['MovieReleaseName'].lower() for x in self.quality)]
-					if len(filter) > 0: chosen_sub = filter[0]
-					else: chosen_sub = result[0]
-			try: lang = convert_language(chosen_sub['SubLanguageID'])
-			except: lang = chosen_sub['SubLanguageID']
-			sub_format = chosen_sub['SubFormat']
-			final_filename = sub_filename + '_%s.%s' % (lang, sub_format)
-			download_url = chosen_sub['ZipDownloadLink']
-			temp_zip = os.path.join(subtitle_path, 'temp.zip')
-			temp_path = os.path.join(subtitle_path, chosen_sub['SubFileName'])
+					score = 0
+					chosen_sub = results[0]
+					for result in results:
+						current_score = 0
+						name = result['attributes']['release']
+						if re.search('720p', name, re.IGNORECASE): current_score += 1
+						if re.search('1080p', name, re.IGNORECASE): current_score += 2
+						if re.search('2160p', name, re.IGNORECASE): current_score += 3
+						if re.search('bluray', name, re.IGNORECASE): current_score += 4
+						if current_score > score: 
+							score = current_score
+							chosen_sub = result
+
+					# fmt = re.split(r'\.|\(|\)|\[|\]|\s|\-', video_path)
+					# fmt = [i.lower() for i in fmt]
+					# fmt = [i for i in fmt if i in self.quality]
+					# if season and fmt == '': fmt = 'hdtv'
+					# result = [i for i in result if i['SubSumCD'] == '1']
+					# filter = [i for i in result if i['SubLanguageID'] == self.language \
+					# 							and any(x in i['MovieReleaseName'].lower() for x in fmt) and any(x in i['MovieReleaseName'].lower() for x in self.quality)]
+					# if len(filter) > 0: chosen_sub = filter[0]
+					# else: chosen_sub = result[0]
+			# try: lang = convert_language(chosen_sub['SubLanguageID'])
+			# except: lang = chosen_sub['SubLanguageID']
+			logger("Subtile duoc chon: ", str(chosen_sub))
+			sub_format = "srt"
+			final_filename = sub_filename + '.%s.%s' % (self.language, sub_format)
+			temp_zip = os.path.join(subtitle_path, 'temp.srt')
+			temp_path = os.path.join(subtitle_path, chosen_sub['attributes']['release'])
 			final_path = os.path.join(subtitle_path, final_filename)
-			subtitle = self.os.download(download_url, subtitle_path, temp_zip, temp_path, final_path)
+			subtitle = self.os.download(chosen_sub, subtitle_path, temp_zip, temp_path, final_path)
+			if not subtitle: _notification("Không tìm thấy sub từ opensubtiles.com", 3000)
 			sleep(1000)
 			return subtitle
 		if self.subs_action == '2': return
 		# sleep(2500)
-		imdb_id = re.sub(r'[^0-9]', '', imdb_id)
-		logger("Imdb id của phim này: ", str(imdb_id))
-		# subtitle_path = translate_path('special://temp/')
+		# tmdb_id = re.sub(r'[^0-9]', '', tmdb_id)
+		logger("tmdb_id id của phim này: ", str(tmdb_id))
+		subtitle_path = translate_path('special://temp/')
 		subtitle_path = translate_path(ku.jsonrpc_get_system_setting("subtitles.custompath"))
-		logger("Đường dẫn subtile custom: ", subtitle_path)
-		sub_filename = 'FENSubs_%s_%s_%s' % (imdb_id, season, episode) if season else 'FENSubs_%s' % imdb_id
-		# search_filename = sub_filename + '_%s.srt' % self.language
+		# logger("Đường dẫn subtile custom: ", subtitle_path)
+		sub_filename = 'FENSubs_%s_%s_%s' % (tmdb_id, season, episode) if season else 'FENSubs_%s' % tmdb_id
+		search_filename = sub_filename + '.%s.srt' % self.language
 		# subtitle = _video_file_subs()
 		# if subtitle: return
 		subtitle = _downloaded_subs(url)
 		if subtitle: return self.setSubtitles(subtitle)
-		# subtitle = _searched_subs()
-		# if subtitle: return self.setSubtitles(subtitle)
+		subtitle = _searched_subs()
+		if subtitle: return self.setSubtitles(subtitle)
 		# if secondary_search: return _notification(32793)
 		# secondary_language = get_setting('fen.subtitles.language_secondary')
 		# if secondary_language in (self.language, None, 'None', ''): return _notification(32793)
