@@ -114,7 +114,7 @@ class FenPlayer(xbmc_player):
 						ensure_dialog_dead = True
 						self.playback_close_dialogs()
 					sleep(1000)
-					if xbmcgui.getCurrentWindowDialogId() == 10159:
+					if xbmcgui.getCurrentWindowDialogId() == 10153:
 						logger("hien dialog subtitles: ", str(xbmcgui.getCurrentWindowDialogId()))
 						self.subs_action = '1'
 						self.subs_searched = False
@@ -262,6 +262,7 @@ class FenPlayer(xbmc_player):
 	def run_subtitles(self, source):
 		self.subs_searched = True
 		ku.close_dialog("osdsubtitlesettings", True)
+		ku.close_dialog("subtitlesearch", True)
 		try: Thread(target=Subtitles().get, args=(self, self.title, self.tmdb_id, self.season or None, self.episode or None, self.url, source, self.subs_action)).start()
 		except: pass
 
