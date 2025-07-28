@@ -6,7 +6,7 @@ from apis.opensubtitles_api import OpenSubtitlesAPI
 from apis.trakt_api import make_trakt_slug
 from modules import kodi_utils as ku, settings as st, watched_status as ws
 from modules.utils import sec2time
-import xbmc
+import xbmcgui
 logger = ku.logger
 from urllib.parse import unquote
 
@@ -24,10 +24,19 @@ video_fullscreen_check = 'Window.IsActive(fullscreenvideo)'
 class FenPlayer(xbmc_player):
 	def __init__ (self):
 		xbmc_player.__init__(self)
+		self.subs_action = get_setting('fen.subtitles.subs_action')
+		self.subs_searched = False
 
 	def onPlayBackStarted(self) -> None:
-		logger("Chạy vào hàm bắt đầu play back", "on playback paused")
-		self.run_subtitles()
+		logger("Chạy vào hàm bắt đầu play back sub_action: " + str(self.subs_action), "on playback started")
+		if self.subs_action == '1':
+			logger("Có chạy vào subaction = 1", "on playback started")
+			try: Thread(target=Subtitles().get, args=(self, self.title, self.tmdb_id, self.season or None, self.episode or None, self.url, "onPlayBackStarted")).start()
+			except Exception:
+				logger("Exception khi run subtile: " + str(Exception), "on playback started")
+				pass
+		elif self.subs_action == '0':
+			self.run_subtitles("onPlayBackStarted")
 
 	def run(self, url=None, obj=None):
 		logger("Url dang xem: ", str(url))
@@ -105,6 +114,10 @@ class FenPlayer(xbmc_player):
 						ensure_dialog_dead = True
 						self.playback_close_dialogs()
 					sleep(1000)
+					if xbmcgui.getCurrentWindowDialogId() == 10159:
+						logger("hien dialog subtitles: ", str(xbmcgui.getCurrentWindowDialogId()))
+						self.subs_action = '1'
+						self.subs_searched = False
 					self.current_point = round(float(self.curr_time/self.total_time * 100), 1)
 					if self.current_point >= self.set_watched:
 						if play_random_continual: self.run_random_continual(); break
@@ -113,10 +126,11 @@ class FenPlayer(xbmc_player):
 						if not self.nextep_info_gathered: self.info_next_ep()
 						if round(self.total_time - self.curr_time) <= self.start_prep: self.run_next_ep(); break
 					if self.curr_time - pass_time > 10:
-						logger("total time: " + str(self.getTotalTime()), "current time: " + str(self.getTime()))
+						# logger("total time: " + str(self.getTotalTime()), "current time: " + str(self.getTime()))
+						# logger("CUrretn window dialog id: ", str(xbmcgui.getCurrentWindowDialogId()))
 						pass_time = self.curr_time
 						self.media_watched_marker()
-					# if not self.subs_searched: self.run_subtitles()
+					if not self.subs_searched and self.subs_action != '2': self.run_subtitles("isPlayingVideo")
 				except: pass
 			hide_busy_dialog()
 			if not self.media_marked: self.media_watched_marker()
@@ -245,9 +259,10 @@ class FenPlayer(xbmc_player):
 		if not self.media_marked: self.media_watched_marker(force_watched=True)
 		EpisodeTools(self.meta).play_random_continual(False)
 
-	def run_subtitles(self):
+	def run_subtitles(self, source):
 		self.subs_searched = True
-		try: Thread(target=Subtitles().get, args=(self.title, self.tmdb_id, self.season or None, self.episode or None, self.url)).start()
+		ku.close_dialog("osdsubtitlesettings", True)
+		try: Thread(target=Subtitles().get, args=(self, self.title, self.tmdb_id, self.season or None, self.episode or None, self.url, source, self.subs_action)).start()
 		except: pass
 
 	def set_resume_point(self, listitem):
@@ -287,7 +302,7 @@ class FenPlayer(xbmc_player):
 			self.meta = self.sources_object.meta
 			self.meta_get, self.kodi_monitor, self.playback_percent = self.meta.get, ku.monitor, self.sources_object.playback_percent or 0.0
 			self.monitor_playback, self.playing_filename = self.sources_object.monitor_playback, self.sources_object.playing_filename
-			self.media_marked, self.nextep_info_gathered, self.subs_searched = False, False, False
+			self.media_marked, self.nextep_info_gathered = False, False
 			self.playback_successful, self.cancel_all_playback = None, False
 			self.set_watched, self.set_resume = playback_settings()
 
@@ -320,22 +335,25 @@ class Subtitles(xbmc_player):
 		self.language = get_setting('fen.subtitles.language_primary')
 		self.quality = ['bluray', 'hdrip', 'brrip', 'bdrip', 'dvdrip', 'webdl', 'webrip', 'webcap', 'web', 'hdtv', 'hdrip']
 
-	def get(self, query, tmdb_id, season, episode, url, secondary_search=False):
+	def get(self, fenPlayer, query, tmdb_id, season, episode, url, source, subs_action = None, secondary_search=False):
 		logger("Bắt đầu hàm get subtitle subaction", str(self.subs_action))
+		if subs_action: self.subs_action = subs_action
 		def _notification(line, _time=3500):
 			return notification(line, _time)
-		_notification(33192, 1500)
 		def _video_file_subs():
-			_notification("Thử tìm sub nhúng trước", 1500)
+			_notification("Thử tìm sub nhúng " + self.language, 1500)
 			try: available_sub_language = self.getSubtitles()
 			except: available_sub_language = ''
 			if available_sub_language == self.language:
 				if self.auto_enable == 'true':
 					self.showSubtitles(True)
-					_notification("Có sub nhúng tiếng " + self.language, 1500)
+					_notification("Có sub nhúng " + self.language, 1500)
+					fenPlayer.subs_searched = True
 					return True
+			_notification("Ko có sub nhúng " + self.language, 1500)
 			return False
-		def _downloaded_subs(url):
+		def _downloaded_subs():
+			_notification(33192, 1500)
 			files = list_dirs(subtitle_path)[1]
 			logger("Danh sach thu muc va file: ", str(files))
 			if len(files) > 0:
@@ -351,6 +369,7 @@ class Subtitles(xbmc_player):
 				if final_match:
 					subtitle = os.path.join(subtitle_path, final_match)
 					_notification(32792)
+					fenPlayer.subs_searched = True
 					return subtitle
 				else:
 					_notification(32793, 2000)
@@ -425,12 +444,18 @@ class Subtitles(xbmc_player):
 		# logger("Đường dẫn subtile custom: ", subtitle_path)
 		sub_filename = 'FENSubs_%s_%s_%s' % (tmdb_id, season, episode) if season else 'FENSubs_%s' % tmdb_id
 		search_filename = sub_filename + '.%s.srt' % self.language
-		subtitle = _video_file_subs()
-		if subtitle: return
-		subtitle = _downloaded_subs(url)
-		if subtitle: return self.setSubtitles(subtitle)
-		subtitle = _searched_subs()
-		if subtitle: return self.setSubtitles(subtitle)
+		if source == "onPlayBackStarted":
+			subtitle = _video_file_subs()
+			if subtitle: return
+			subtitle = _downloaded_subs()
+			if subtitle: return self.setSubtitles(subtitle)
+			if self.subs_action == '0':
+				subtitle = _searched_subs()
+				if subtitle: return self.setSubtitles(subtitle)
+		elif source == "isPlayingVideo":
+			if self.subs_action == '1':
+				subtitle = _searched_subs()
+				if subtitle: return self.setSubtitles(subtitle)
 		# if secondary_search: return _notification(32793)
 		# secondary_language = get_setting('fen.subtitles.language_secondary')
 		# if secondary_language in (self.language, None, 'None', ''): return _notification(32793)

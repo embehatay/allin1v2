@@ -4,7 +4,7 @@ import shutil
 from zipfile import ZipFile
 from datetime import timedelta
 from caches.main_cache import main_cache
-from modules.kodi_utils import requests, json, notification, sleep, delete_file, rename_file, quote, logger
+from modules.kodi_utils import requests, json, notification, sleep, delete_file, rename_file, quote, logger, exists
 # from modules.kodi_utils import logger
 
 user_agent = 'Fen v1.0'
@@ -20,7 +20,9 @@ class OpenSubtitlesAPI:
 		# logger("Main cache name: ", cache)
 		# if cache: return cache
 		if language == "vie": language = "vi"
-		url = 'https://api.opensubtitles.com/api/v1/subtitles?parent_tmdb_id=%s&query=%s%s&languages=%s' \
+		tmdb = 'tmdb_id'
+		if season: tmdb = 'parent_tmdb_id'
+		url = 'https://api.opensubtitles.com/api/v1/subtitles?' + tmdb + '=%s&query=%s%s&languages=%s' \
 				% (tmdb_id, quote(query), '&season_number=%d&episode_number=%d' % (season, episode) if season else '', language)
 		response = self._get(url, retry=True)
 		try: response = json.loads(response.text)
@@ -36,6 +38,7 @@ class OpenSubtitlesAPI:
 		except: return
 		result = self._get(download_url, stream=True, retry=True)
 		with open(temp_zip, 'wb') as f: f.write(result.content)
+		if exists(final_path): delete_file(final_path)
 		rename_file(temp_zip, final_path)
 		return final_path
 
