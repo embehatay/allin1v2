@@ -13,7 +13,7 @@ class OpenSubtitlesAPI:
 	def __init__(self):
 		self.headers = {'User-Agent': user_agent, 'Api-Key': "ZOqH073CohDfqGY0aPCCMLKMK702Db6D"}
 
-	def search(self, query, tmdb_id, language, season=None, episode=None):
+	def search(self, query, tmdb_id, language, results, season=None, episode=None):
 		# cache_name = 'opensubtitles_%s_%s' % (tmdb_id, language)
 		# if season: cache_name += '_%s_%s' % (season, episode)
 		# cache = main_cache.get(cache_name)

@@ -69,7 +69,8 @@ meta_languages = [
 {'iso': 'pl', 'name': 'Polish'},           {'iso': 'pt', 'name': 'Portuguese'},
 {'iso': 'ru', 'name': 'Russian'},          {'iso': 'sl', 'name': 'Slovenian'},
 {'iso': 'es', 'name': 'Spanish'},          {'iso': 'sv', 'name': 'Swedish'},
-{'iso': 'tr', 'name': 'Turkish'},          {'iso': 'ar-SA', 'name': 'Arabic Saudi Arabia'}
+{'iso': 'tr', 'name': 'Turkish'},          {'iso': 'ar-SA', 'name': 'Arabic Saudi Arabia'},
+{'iso': 'vi', 'name': 'Vietnamese'}
 	]
 
 language_choices =  {

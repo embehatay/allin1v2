@@ -376,6 +376,13 @@ def select_dialog(function_list, **kwargs):
 	if kwargs.get('multi_choice', 'false') == 'true': return [function_list[i] for i in selection]
 	return function_list[selection]
 
+def subtitles_select_dialog(function_list, **kwargs):
+	from windows.base_window import open_window
+	selection = open_window(('windows.default_dialogs', 'Select'), 'select.xml', **kwargs)
+	if selection in (None, []): return selection
+	if kwargs.get('multi_choice', 'false') == 'true': return [function_list[i] for i in selection]
+	return selection
+
 def confirm_dialog(heading=32036, text=32580, ok_label=32839, cancel_label=32840, default_control=11):
 	from windows.base_window import open_window
 	if isinstance(heading, int): heading = local_string(heading)

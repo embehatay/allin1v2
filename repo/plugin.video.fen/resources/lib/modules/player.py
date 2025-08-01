@@ -7,6 +7,8 @@ from apis.trakt_api import make_trakt_slug
 from modules import kodi_utils as ku, settings as st, watched_status as ws
 from modules.utils import sec2time
 import xbmcgui
+
+from apis.subsource_api import SubsourceAPI
 logger = ku.logger
 from urllib.parse import unquote
 
@@ -327,10 +329,26 @@ class FenPlayer(xbmc_player):
 		notification(32121, 3500)
 		return False
 
+class ThreadWithReturnValue(Thread):
+    
+    def __init__(self, group=None, target=None, name=None,
+                 args=(), kwargs={}, Verbose=None):
+        Thread.__init__(self, group, target, name, args, kwargs)
+        self._return = None
+
+    def run(self):
+        if self._target is not None:
+            self._return = self._target(*self._args,
+                                                **self._kwargs)
+    def join(self, *args):
+        Thread.join(self, *args)
+        return self._return
+
 class Subtitles(xbmc_player):
 	def __init__(self):
 		xbmc_player.__init__(self)
 		self.os = OpenSubtitlesAPI()
+		self.ss = SubsourceAPI()
 		self.auto_enable = get_setting('fen.subtitles.auto_enable')
 		self.subs_action = get_setting('fen.subtitles.subs_action')
 		self.language = get_setting('fen.subtitles.language_primary')
@@ -379,31 +397,53 @@ class Subtitles(xbmc_player):
 			return False
 
 		def _searched_subs():
-			notification("Bắt đầu tìm sub trên opensubtitles.com !!!", 2000)
+			notification("Bắt đầu tìm sub trên opensubtitles.com và subsource.net !!!", 1500)
 			chosen_sub = None
-			results = self.os.search(query, tmdb_id, self.language, season, episode)
-			if not results or len(results) == 0: return False
+			os_results = []
+			ss_results = []
+			if season:
+				os_thread = ThreadWithReturnValue(target = self.os.search, args=(query, tmdb_id, self.language, os_results, season, episode))
+				os_thread.start()
+				if os_thread.join(): os_results = os_thread.join()
+			else:
+				os_thread = ThreadWithReturnValue(target = self.os.search, args=(query, tmdb_id, self.language, os_results, season, episode))
+				ss_thread = ThreadWithReturnValue(target = self.ss.search, args=(query, tmdb_id, self.language, fenPlayer.year, ss_results, season, episode))
+				os_thread.start()
+				ss_thread.start()
+				if os_thread.join(): os_results = os_thread.join()
+				if ss_thread.join(): ss_results = ss_thread.join()
+			if len(os_results) == 0 and len(ss_results) == 0: 
+				_notification("Ko có sub nào trên opensubtitles.com và subsource.net", 1500)
+				return False
 			try: video_path = self.getPlayingFile()
 			except: video_path = ''
 			if '|' in video_path: video_path = video_path.split('|')[0]
 			video_path = os.path.basename(video_path)
+			results = os_results + ss_results
+			subtitle = None
+			chosen_source = 'os'
 			if self.subs_action == '1':
 				self.pause()
 				# choices = [i for i in result if i['SubLanguageID'] == self.language and i['SubSumCD'] == '1']
 				# if len(choices) == 0: return False
-				dialog_list = ['[B]%s[/B] | [I]%s[/I]' % (self.language.upper(), i['attributes']['release']) for i in results]
+				dialog_list = ['[B]%s[/B] | [I]%s[/I]' % (self.language.upper(), i['attributes']['release']) for i in os_results]
+				ss_dialog_list = ['[B]%s[/B] | [I]%s[/I]' % (self.language.upper(), i['release_info']) for i in ss_results]
+				dialog_list.extend(ss_dialog_list)
+				logger("Sub cho vao dialog list: ", dialog_list)
 				list_items = [{'line1': item} for item in dialog_list]
 				kwargs = {'items': json.dumps(list_items), 'heading': video_path.replace('%20', ' '), 'enumerate': 'true', 'narrow_window': 'true'}
-				chosen_sub = select_dialog(results, **kwargs)
+				chosen_sub = ku.subtitles_select_dialog(results, **kwargs)
+				logger("INdex cua sub da chon: ", str(chosen_sub))
 				self.pause()
-				if not chosen_sub: return False
+				if chosen_sub == None or chosen_sub == []: return False
+				if (chosen_sub >= len(os_results)): chosen_source = 'ss'
 			else:
 				# try: chosen_sub = [i for i in results if i['attributes']['release'].lower() in video_path.lower()][0]
 				# except: pass
 				if not chosen_sub:
 					score = 0
-					chosen_sub = results[0]
-					for result in results:
+					chosen_sub = 0
+					for index, result in enumerate(os_results):
 						current_score = 0
 						name = result['attributes']['release']
 						if re.search('720p', name, re.IGNORECASE): current_score += 1
@@ -412,7 +452,19 @@ class Subtitles(xbmc_player):
 						if re.search('bluray', name, re.IGNORECASE): current_score += 4
 						if current_score > score: 
 							score = current_score
-							chosen_sub = result
+							chosen_sub = index
+					
+					for index, result in enumerate(ss_results):
+						current_score = 0
+						name = result['release_info']
+						if re.search('720p', name, re.IGNORECASE): current_score += 1
+						if re.search('1080p', name, re.IGNORECASE): current_score += 2
+						if re.search('2160p', name, re.IGNORECASE): current_score += 3
+						if re.search('bluray', name, re.IGNORECASE): current_score += 4
+						if current_score > score: 
+							score = current_score
+							chosen_sub = index
+							chosen_source = 'ss'
 
 					# fmt = re.split(r'\.|\(|\)|\[|\]|\s|\-', video_path)
 					# fmt = [i.lower() for i in fmt]
@@ -425,13 +477,17 @@ class Subtitles(xbmc_player):
 					# else: chosen_sub = result[0]
 			# try: lang = convert_language(chosen_sub['SubLanguageID'])
 			# except: lang = chosen_sub['SubLanguageID']
-			logger("Subtile duoc chon: ", str(chosen_sub))
+			logger("Subtile duoc chon: ", str(results[chosen_sub]))
 			sub_format = "srt"
 			final_filename = sub_filename + '.%s.%s' % (self.language, sub_format)
-			temp_zip = os.path.join(subtitle_path, 'temp.srt')
-			temp_path = os.path.join(subtitle_path, chosen_sub['attributes']['release'])
+			temp_path = os.path.join(subtitle_path, 'some_path')
 			final_path = os.path.join(subtitle_path, final_filename)
-			subtitle = self.os.download(chosen_sub, subtitle_path, temp_zip, temp_path, final_path)
+			if chosen_source == 'os':
+				temp_zip = os.path.join(subtitle_path, 'temp.srt')
+				subtitle = self.os.download(results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
+			else:
+				temp_zip = os.path.join(subtitle_path, 'temp.zip')
+				subtitle = self.ss.download(results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
 			if not subtitle: _notification("Không tìm thấy sub từ opensubtiles.com", 3000)
 			_notification("Có sub: " + str(subtitle))
 			sleep(1000)
@@ -440,7 +496,7 @@ class Subtitles(xbmc_player):
 		# sleep(2500)
 		# tmdb_id = re.sub(r'[^0-9]', '', tmdb_id)
 		logger("tmdb_id id của phim này: ", str(tmdb_id))
-		subtitle_path = translate_path('special://temp/')
+		# subtitle_path = translate_path('special://temp/')
 		subtitle_path = translate_path(ku.jsonrpc_get_system_setting("subtitles.custompath"))
 		# logger("Đường dẫn subtile custom: ", subtitle_path)
 		sub_filename = 'FENSubs_%s_%s_%s' % (tmdb_id, season, episode) if season else 'FENSubs_%s' % tmdb_id

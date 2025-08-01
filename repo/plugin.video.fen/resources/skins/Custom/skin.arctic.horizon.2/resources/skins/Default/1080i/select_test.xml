@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+    <control type="label" id="1">
+        <description>My First label</description>
+        <left>80</left>
+        <top>60</top>
+        <width>250</width>
+        <visible>true</visible>
+        <align>center</align>
+        <aligny>center</aligny>
+        <scroll>false</scroll>
+        <label>This will be on the first line[CR]And this will be on the second line</label>
+        <angle>30</angle>
+        <haspath>false</haspath>
+        <font>font14</font>
+        <textcolor>FFB2D4F5</textcolor>
+        <shadowcolor>ff000000</shadowcolor>
+        <wrapmultiline>false</wrapmultiline>
+        <scrollspeed>50</scrollspeed>
+        <scrollsuffix> - </scrollsuffix>
+    </control>
+</window>

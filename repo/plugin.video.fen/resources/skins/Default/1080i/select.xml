@@ -134,6 +134,7 @@
                         <font>font12</font> <!-- FEN_26 -->
                         <textcolor>FFCCCCCC</textcolor>
                         <aligny>center</aligny>
+                        <scroll>true</scroll>
                         <label>[UPPERCASE]$INFO[ListItem.Property(line1)][/UPPERCASE]</label>
                     </control>
                     <control type="group">

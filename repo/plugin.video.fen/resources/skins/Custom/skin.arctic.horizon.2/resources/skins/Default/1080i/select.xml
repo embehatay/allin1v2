@@ -110,6 +110,7 @@
                 <focusposition>3</focusposition>
                 <movement>4</movement>
                 <scrolltime tween="sine">200</scrolltime>
+                <autoscroll>true</autoscroll>
                 <itemlayout height="90" width="700">
                     <control type="label">
                         <description>Only Line1</description>
