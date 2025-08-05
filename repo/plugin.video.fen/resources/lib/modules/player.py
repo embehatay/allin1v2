@@ -381,13 +381,13 @@ class Subtitles(xbmc_player):
 				files = [i for i in files if i.endswith('.srt')]
 				for item in files:
 					logger("So sanh de tim ra file sub: " + search_filename, item)
-					if item == search_filename:
+					if re.search(search_filename, item, re.IGNORECASE):
 						match_lang1 = item
 						break
 				final_match = match_lang1 or match_lang2 or None
 				if final_match:
 					subtitle = os.path.join(subtitle_path, final_match)
-					_notification(32792)
+					_notification("Tìm được sub: " + str(final_match))
 					fenPlayer.subs_searched = True
 					return subtitle
 				else:
@@ -397,23 +397,23 @@ class Subtitles(xbmc_player):
 			return False
 
 		def _searched_subs():
-			notification("Bắt đầu tìm sub trên opensubtitles.com và subsource.net !!!", 1500)
+			notification("Bắt đầu tìm sub trên opensubtitles.com", 1500)
 			chosen_sub = None
 			os_results = []
 			ss_results = []
-			if season:
-				os_thread = ThreadWithReturnValue(target = self.os.search, args=(query, tmdb_id, self.language, os_results, season, episode))
-				os_thread.start()
-				if os_thread.join(): os_results = os_thread.join()
-			else:
-				os_thread = ThreadWithReturnValue(target = self.os.search, args=(query, tmdb_id, self.language, os_results, season, episode))
-				ss_thread = ThreadWithReturnValue(target = self.ss.search, args=(query, tmdb_id, self.language, fenPlayer.year, ss_results, season, episode))
-				os_thread.start()
-				ss_thread.start()
-				if os_thread.join(): os_results = os_thread.join()
-				if ss_thread.join(): ss_results = ss_thread.join()
+			# if season:
+			os_thread = ThreadWithReturnValue(target = self.os.search, args=(query, tmdb_id, self.language, os_results, season, episode))
+			os_thread.start()
+			if os_thread.join(): os_results = os_thread.join()
+			# else:
+			# 	os_thread = ThreadWithReturnValue(target = self.os.search, args=(query, tmdb_id, self.language, os_results, season, episode))
+			# 	ss_thread = ThreadWithReturnValue(target = self.ss.search, args=(query, tmdb_id, self.language, fenPlayer.year, ss_results, season, episode))
+			# 	os_thread.start()
+			# 	ss_thread.start()
+			# 	if os_thread.join(): os_results = os_thread.join()
+			# 	if ss_thread.join(): ss_results = ss_thread.join()
 			if len(os_results) == 0 and len(ss_results) == 0: 
-				_notification("Ko có sub nào trên opensubtitles.com và subsource.net", 1500)
+				_notification("Ko có sub nào trên opensubtitles.com", 1500)
 				return False
 			try: video_path = self.getPlayingFile()
 			except: video_path = ''
@@ -479,9 +479,16 @@ class Subtitles(xbmc_player):
 			# except: lang = chosen_sub['SubLanguageID']
 			logger("Subtile duoc chon: ", str(results[chosen_sub]))
 			sub_format = "srt"
-			final_filename = sub_filename + '.%s.%s' % (self.language, sub_format)
+			final_filename = sub_filename + '_' + str(results[chosen_sub]['attributes']['release']) + '.%s.%s' % (self.language, sub_format)
 			temp_path = os.path.join(subtitle_path, 'some_path')
 			final_path = os.path.join(subtitle_path, final_filename)
+			files = list_dirs(subtitle_path)[1]
+			if len(files) > 0:
+				files = [i for i in files if i.endswith('.srt')]
+				for item in files:
+					if re.search(search_filename, item, re.IGNORECASE):
+						ku.delete_file(os.path.join(subtitle_path, item))
+						break
 			if chosen_source == 'os':
 				temp_zip = os.path.join(subtitle_path, 'temp.srt')
 				subtitle = self.os.download(results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
@@ -500,7 +507,8 @@ class Subtitles(xbmc_player):
 		subtitle_path = translate_path(ku.jsonrpc_get_system_setting("subtitles.custompath"))
 		# logger("Đường dẫn subtile custom: ", subtitle_path)
 		sub_filename = 'FENSubs_%s_%s_%s' % (tmdb_id, season, episode) if season else 'FENSubs_%s' % tmdb_id
-		search_filename = sub_filename + '.%s.srt' % self.language
+		# search_filename = sub_filename + '.%s.srt' % self.language
+		search_filename = sub_filename
 		if source == "onPlayBackStarted":
 			subtitle = _video_file_subs()
 			if subtitle: return
