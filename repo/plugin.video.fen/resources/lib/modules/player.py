@@ -450,6 +450,7 @@ class Subtitles(xbmc_player):
 
     def get(self, fenPlayer, query, tmdb_id, season, episode, url, source, subs_action=None, secondary_search=False):
         logger("Bắt đầu hàm get subtitle subaction", str(self.subs_action))
+        logger("imdb id của phim này là: ", str(fenPlayer.imdb_id))
         if subs_action:
             self.subs_action = subs_action
 
@@ -502,14 +503,19 @@ class Subtitles(xbmc_player):
                 "Bắt đầu tìm sub trên opensubtitles.com và Subdl", 1500)
             chosen_sub = None
             os_results = []
-            # ss_results = []
+            ss_results = []
             sd_results = []
             if season:
                 os_thread = ThreadWithReturnValue(target=self.os.search, args=(
                     query, tmdb_id, self.language, os_results, season, episode))
+                ss_thread = ThreadWithReturnValue(target=self.ss.search, args=(
+                   fenPlayer.imdb_id, season, episode))
                 os_thread.start()
+                ss_thread.start()
                 if os_thread.join():
                     os_results = os_thread.join()
+                if ss_thread.join():
+                    ss_results = ss_thread.join()
             else:
                 os_thread = ThreadWithReturnValue(target=self.os.search, args=(
                     query, tmdb_id, self.language, os_results, season, episode))
@@ -521,7 +527,7 @@ class Subtitles(xbmc_player):
                     os_results = os_thread.join()
                 if sd_thread.join():
                     sd_results = sd_thread.join()
-            if len(os_results) == 0 and len(sd_results) == 0:
+            if len(os_results) == 0 and len(sd_results) == 0 and len(ss_results) == 0:
                 _notification(
                     "Ko có sub nào trên opensubtitles.com và Subdl", 1500)
                 return False
@@ -532,7 +538,7 @@ class Subtitles(xbmc_player):
             if '|' in video_path:
                 video_path = video_path.split('|')[0]
             video_path = os.path.basename(video_path)
-            results = os_results + sd_results
+            results = os_results + sd_results + ss_results
             subtitle = None
             chosen_source = 'os'
             if self.subs_action == '1':
@@ -592,6 +598,22 @@ class Subtitles(xbmc_player):
                             chosen_sub = index
                             chosen_source = 'sd'
 
+                    for index, result in enumerate(ss_results):
+                        current_score = 0
+                        name = result['releaseInfo'][0]
+                        if re.search('720p', name, re.IGNORECASE):
+                            current_score += 1
+                        if re.search('1080p', name, re.IGNORECASE):
+                            current_score += 2
+                        if re.search('2160p', name, re.IGNORECASE):
+                            current_score += 3
+                        if re.search('bluray', name, re.IGNORECASE):
+                            current_score += 4
+                        if current_score > score:
+                            score = current_score
+                            chosen_sub = index
+                            chosen_source = 'ss'
+
                     # fmt = re.split(r'\.|\(|\)|\[|\]|\s|\-', video_path)
                     # fmt = [i.lower() for i in fmt]
                     # fmt = [i for i in fmt if i in self.quality]
@@ -609,6 +631,10 @@ class Subtitles(xbmc_player):
                 final_filename = sub_filename + '_' + \
                     str(results[chosen_sub]['attributes']['release']
                         ) + '.%s.%s' % (self.language, sub_format)
+            elif chosen_source == 'ss':
+                final_filename = sub_filename + '_' + \
+                    str(results[chosen_sub]['releaseInfo']
+                        ) + '.%s.%s' % (self.language, sub_format)
             else:
                 final_filename = sub_filename + '_' + \
                     str(results[chosen_sub]['release_name']) + \
@@ -625,6 +651,10 @@ class Subtitles(xbmc_player):
             if chosen_source == 'os':
                 temp_zip = os.path.join(subtitle_path, 'temp.srt')
                 subtitle = self.os.download(
+                    results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
+            elif chosen_source == 'ss':
+                temp_zip = os.path.join(subtitle_path, 'temp.srt')
+                subtitle = self.ss.download(
                     results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
             else:
                 temp_zip = os.path.join(subtitle_path, 'temp.zip')

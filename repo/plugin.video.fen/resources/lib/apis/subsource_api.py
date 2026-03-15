@@ -15,54 +15,49 @@ user_agent = 'Fen v1.0'
 
 class SubsourceAPI:
 	def __init__(self):
-		self.__api = "https://api.subsource.net/v1"
-		self.__search = self.__api + "/movie/search"
-		self.__getSub = self.__api + "/subtitle/"
-		self.__download = self.__getSub + "download/"
+		self.__api = "https://api.subsource.net/api/v1"
+		self.__search = self.__api + "/movies/search"
+		self.__getSub = self.__api + "/subtitles/"
 		self.headers = {
-			'content-type': 'application/json'
+			'X-API-Key': 'sk_66822bc74602f40016a03263b24bf6c9b3a67eb35439cb3ca30ff1773d164631'
 		}
+		self.movieId = None
+		self.episode = None
 
-	def search(self, query, tmdb_id, language, year, results, season=None, episode=None):
-		if season: type = 'tvseries'
-		else: type = 'movie'
-		if language == "vie": language = "vi"
-		for item in modules.meta_lists.meta_languages:
-			if language == item["iso"]: language = item["name"].lower()
-		payload = json.dumps({"query": query + " " + str(year), "includeSeasons": True if season else False})
-		logger("Tham so de so sanh: " + type, year)
+	def search(self, imdb_id, season=None, episode=None):
+		self.episode = int(episode)
+		payload = {"searchType": "imdb", "season": season, "imdb": imdb_id}
 		try: 
-			response = requests.request("POST", self.__search, headers=self.headers, data=payload, timeout=5000)
+			response = requests.request("GET", self.__search, headers=self.headers, params=payload, timeout=5000)
 			logger("Ket qua search sub source: ", str(response))
-			response = json.loads(response.text)
-			search_result = None
-			for result in response['results']:
-				if result['type'] == type and str(result['releaseYear']) == str(year) and re.search(query, result['title'], re.IGNORECASE):
-					search_result = result
-					break
-			return self.searchSubtitles(search_result, language)
+			self.movieId = response.json()["data"][0]["movieId"]
+			return self.searchSubtitles()
 		except Exception as exc: 
 			logger("Exception: " + str(exc), "search@subsource")
 			traceback.print_exc()
 			return
 
-	def searchSubtitles(self, result, language):
+	def searchSubtitles(self):
 		try:
-			logger("Language cua sub phim: " + str(language), "searchSubtitles@subsource")
-			response = requests.get(self.__api + str(result['link']), params={"language": language}, timeout=5000)
+			payload2 = {'movieId': self.movieId, 'language': 'vietnamese'}
+			response = requests.request("GET", self.__getSub, headers=self.headers, params=payload2)
 			logger("Danh sach sub source: ", response.text)
-			return json.loads(response.text)["subtitles"]
-		except Exception as exc: 
+			choosenSub = response.json()["data"][0]
+			score = int(choosenSub["rating"]["good"]) - int(choosenSub["rating"]["bad"]) + int(choosenSub["downloads"])
+			for subtitle in response.json()["data"]:
+				currentScore = int(subtitle["rating"]["good"]) - int(subtitle["rating"]["bad"]) + int(subtitle["downloads"])
+				if currentScore > score:
+					score = currentScore
+					choosenSub = subtitle
+			return [choosenSub]
+		except Exception as exc:
 			logger("Exception: " + str(exc), "searchSubtitles@subsource")
 			traceback.print_exc()
 			return
 	
 	def download(self, chosen_sub, filepath, temp_zip, temp_path, final_path):
 		try: 
-			response = requests.get(self.__getSub + chosen_sub["link"], timeout=5000)
-			download_token = json.loads(response.text)["subtitle"]["download_token"]
-			logger(f"Download token '{download_token}'", "hihi")
-			response = requests.get(self.__download + download_token, stream=True, timeout=5000)
+			response = requests.get(self.__getSub + str(chosen_sub['subtitleId']) + '/download', headers=self.headers, timeout=5000)
 			response.raise_for_status()
 			with open(temp_zip, 'wb') as file:
 				# Iterate over the response content in chunks to handle large files efficiently
@@ -72,8 +67,8 @@ class SubsourceAPI:
 			if exists(final_path): delete_file(final_path)
 			zipSubName = None
 			with ZipFile(temp_zip, 'r') as zip_ref:
-				zipSubName = zip_ref.namelist()[0]
-				zip_ref.extractall(filepath)
+				zipSubName = zip_ref.namelist()[self.episode - 1]
+				zip_ref.extract(zipSubName, filepath)
 			logger(f"Successfully extracted '{temp_zip}' to '{filepath}'.", str(zipSubName))
 			if exists(temp_zip): delete_file(temp_zip)
 			rename_file(os.path.join(filepath, zipSubName), final_path)
