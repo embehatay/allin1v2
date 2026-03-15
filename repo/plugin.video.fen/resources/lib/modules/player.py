@@ -582,37 +582,38 @@ class Subtitles(xbmc_player):
                             score = current_score
                             chosen_sub = index
 
-                    for index, result in enumerate(sd_results):
-                        current_score = 0
-                        name = result['release_info']
-                        if re.search('720p', name, re.IGNORECASE):
-                            current_score += 1
-                        if re.search('1080p', name, re.IGNORECASE):
-                            current_score += 2
-                        if re.search('2160p', name, re.IGNORECASE):
-                            current_score += 3
-                        if re.search('bluray', name, re.IGNORECASE):
-                            current_score += 4
-                        if current_score > score:
-                            score = current_score
-                            chosen_sub = index
-                            chosen_source = 'sd'
+                    if len(os_results) == 0:
+                        for index, result in enumerate(sd_results):
+                            current_score = 0
+                            name = result['release_info']
+                            if re.search('720p', name, re.IGNORECASE):
+                                current_score += 1
+                            if re.search('1080p', name, re.IGNORECASE):
+                                current_score += 2
+                            if re.search('2160p', name, re.IGNORECASE):
+                                current_score += 3
+                            if re.search('bluray', name, re.IGNORECASE):
+                                current_score += 4
+                            if current_score > score:
+                                score = current_score
+                                chosen_sub = index
+                                chosen_source = 'sd'
 
-                    for index, result in enumerate(ss_results):
-                        current_score = 0
-                        name = result['releaseInfo'][0]
-                        if re.search('720p', name, re.IGNORECASE):
-                            current_score += 1
-                        if re.search('1080p', name, re.IGNORECASE):
-                            current_score += 2
-                        if re.search('2160p', name, re.IGNORECASE):
-                            current_score += 3
-                        if re.search('bluray', name, re.IGNORECASE):
-                            current_score += 4
-                        if current_score > score:
-                            score = current_score
-                            chosen_sub = index
-                            chosen_source = 'ss'
+                        for index, result in enumerate(ss_results):
+                            current_score = 0
+                            name = result['releaseInfo'][0]
+                            if re.search('720p', name, re.IGNORECASE):
+                                current_score += 1
+                            if re.search('1080p', name, re.IGNORECASE):
+                                current_score += 2
+                            if re.search('2160p', name, re.IGNORECASE):
+                                current_score += 3
+                            if re.search('bluray', name, re.IGNORECASE):
+                                current_score += 4
+                            if current_score > score:
+                                score = current_score
+                                chosen_sub = index
+                                chosen_source = 'ss'
 
                     # fmt = re.split(r'\.|\(|\)|\[|\]|\s|\-', video_path)
                     # fmt = [i.lower() for i in fmt]
@@ -625,19 +626,21 @@ class Subtitles(xbmc_player):
                     # else: chosen_sub = result[0]
             # try: lang = convert_language(chosen_sub['SubLanguageID'])
             # except: lang = chosen_sub['SubLanguageID']
-            logger("Subtile duoc chon: ", str(results[chosen_sub]))
             sub_format = "srt"
             if chosen_source == 'os':
+                logger("Subtile duoc chon: ", str(os_results[chosen_sub]) + " tu nguon " + str(chosen_source))
                 final_filename = sub_filename + '_' + \
-                    str(results[chosen_sub]['attributes']['release']
+                    str(os_results[chosen_sub]['attributes']['release']
                         ) + '.%s.%s' % (self.language, sub_format)
             elif chosen_source == 'ss':
+                logger("Subtile duoc chon: ", str(ss_results[chosen_sub]) + " tu nguon " + str(chosen_source))
                 final_filename = sub_filename + '_' + \
-                    str(results[chosen_sub]['releaseInfo']
+                    str(ss_results[chosen_sub]['releaseInfo']
                         ) + '.%s.%s' % (self.language, sub_format)
             else:
+                logger("Subtile duoc chon: ", str(sd_results[chosen_sub]) + " tu nguon " + str(chosen_source))
                 final_filename = sub_filename + '_' + \
-                    str(results[chosen_sub]['release_name']) + \
+                    str(sd_results[chosen_sub]['release_name']) + \
                     '.%s.%s' % (self.language, sub_format)
             temp_path = os.path.join(subtitle_path, 'some_path')
             final_path = os.path.join(subtitle_path, final_filename)
@@ -651,15 +654,15 @@ class Subtitles(xbmc_player):
             if chosen_source == 'os':
                 temp_zip = os.path.join(subtitle_path, 'temp.srt')
                 subtitle = self.os.download(
-                    results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
+                    os_results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
             elif chosen_source == 'ss':
                 temp_zip = os.path.join(subtitle_path, 'temp.srt')
                 subtitle = self.ss.download(
-                    results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
+                    ss_results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
             else:
                 temp_zip = os.path.join(subtitle_path, 'temp.zip')
                 subtitle = self.sd.download(
-                    results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
+                    sd_results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
             if not subtitle:
                 _notification(
                     "Không tìm thấy sub từ opensubtiles.com và subdl", 3000)
