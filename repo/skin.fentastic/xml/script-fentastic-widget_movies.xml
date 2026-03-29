@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<includes>
+    <include name="MovieWidgets">
+        <include content="WidgetListBigEpisodes">
+            <param name="content_path" value="plugin://plugin.video.fen/?name=32482&amp;iconImage=player&amp;mode=build_in_progress_episode"/>
+            <param name="widget_header" value="In Progress Episodes"/>
+            <param name="widget_target" value="videos"/>
+            <param name="list_id" value="19011"/>
+        </include>
+        <include content="WidgetListBigEpisodes">
+            <param name="content_path" value="plugin://plugin.video.fen/?name=32483&amp;iconImage=next_episodes&amp;mode=build_next_episode"/>
+            <param name="widget_header" value="Next Episodes"/>
+            <param name="widget_target" value="videos"/>
+            <param name="list_id" value="19012"/>
+        </include>
+        <include content="WidgetListBigEpisodes">
+            <param name="content_path" value="plugin://plugin.video.fen/?name=32458&amp;action=trakt_tv_trending&amp;iconImage=trending&amp;mode=build_tvshow_list"/>
+            <param name="widget_header" value="Trending"/>
+            <param name="widget_target" value="videos"/>
+            <param name="list_id" value="19013"/>
+        </include>
+    </include>
+</includes>
