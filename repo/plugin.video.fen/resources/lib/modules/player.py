@@ -652,11 +652,11 @@ class Subtitles(xbmc_player):
                         ku.delete_file(os.path.join(subtitle_path, item))
                         break
             if chosen_source == 'os':
-                temp_zip = os.path.join(subtitle_path, 'temp.srt')
+                temp_zip = os.path.join(subtitle_path, 'temp.zip')
                 subtitle = self.os.download(
                     os_results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
             elif chosen_source == 'ss':
-                temp_zip = os.path.join(subtitle_path, 'temp.srt')
+                temp_zip = os.path.join(subtitle_path, 'temp.zip')
                 subtitle = self.ss.download(
                     ss_results[chosen_sub], subtitle_path, temp_zip, temp_path, final_path)
             else:

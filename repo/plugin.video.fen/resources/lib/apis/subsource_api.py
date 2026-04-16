@@ -45,6 +45,9 @@ class SubsourceAPI:
 			choosenSub = response.json()["data"][0]
 			score = int(choosenSub["rating"]["good"]) - int(choosenSub["rating"]["bad"]) + int(choosenSub["downloads"])
 			for subtitle in response.json()["data"]:
+				for releaseInfo in subtitle["releaseInfo"]:
+					if f"e0{str(self.episode)}".casefold() in str(releaseInfo).casefold():
+						return [subtitle]
 				currentScore = int(subtitle["rating"]["good"]) - int(subtitle["rating"]["bad"]) + int(subtitle["downloads"])
 				if currentScore > score:
 					score = currentScore
@@ -64,10 +67,15 @@ class SubsourceAPI:
 				for chunk in response.iter_content(chunk_size=8192):
 					file.write(chunk)
 			logger(f"ZIP file '{temp_zip}' downloaded successfully", "hihi")
-			if exists(final_path): delete_file(final_path)
+			logger(f"ZIP file '{final_path}' downloaded successfully", "hihi")
+			# if exists(final_path): delete_file(final_path)
 			zipSubName = None
 			with ZipFile(temp_zip, 'r') as zip_ref:
-				zipSubName = zip_ref.namelist()[self.episode - 1]
+				logger(f"ZIP file length '{len(zip_ref.infolist())}' files", "hihiasdf")
+				if len(zip_ref.infolist()) > 1:
+					zipSubName = zip_ref.namelist()[self.episode - 1]
+				else:
+					zipSubName = zip_ref.namelist()[0]
 				zip_ref.extract(zipSubName, filepath)
 			logger(f"Successfully extracted '{temp_zip}' to '{filepath}'.", str(zipSubName))
 			if exists(temp_zip): delete_file(temp_zip)
