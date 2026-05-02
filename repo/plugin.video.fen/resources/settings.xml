@@ -987,7 +987,7 @@
 			<group id="2" label="32068">
 				<setting id="tmdb_api" type="string" label="32053" help="">
 					<level>0</level>
-					<default>b370b60447737762ca38457bd77579b3</default>
+					<default>668e72a7450f67db4dd7ee02434cb15a</default>
 					<control type="edit" format="string">
 						<heading>32053</heading>
 					</control>
