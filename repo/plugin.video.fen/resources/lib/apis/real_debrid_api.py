@@ -5,7 +5,8 @@ from caches.main_cache import cache_object
 from modules.utils import copy2clip
 from modules import kodi_utils
 from modules.utils import copy2clip
-# logger = kodi_utils.logger
+import traceback
+logger = kodi_utils.logger
 
 requests, sleep, confirm_dialog, ok_dialog, monitor = kodi_utils.requests, kodi_utils.sleep, kodi_utils.confirm_dialog, kodi_utils.ok_dialog, kodi_utils.monitor
 progress_dialog, dialog, get_icon, notification, ls = kodi_utils.progress_dialog, kodi_utils.dialog, kodi_utils.get_icon, kodi_utils.notification, kodi_utils.local_string
@@ -14,6 +15,8 @@ set_temp_highlight, restore_highlight = kodi_utils.set_temp_highlight, kodi_util
 base_url = 'https://api.real-debrid.com/rest/1.0/'
 auth_url = 'https://api.real-debrid.com/oauth/v2/'
 device_url = 'device/code?%s'
+torbox_base_url = 'https://api.torbox.app/v1/'
+torbox_api_key = '26e67f3e-4d56-439f-acf6-6fb6da611972'
 credentials_url = 'device/credentials?%s'
 timeout = 20.0
 icon = get_icon('realdebrid')
@@ -208,8 +211,10 @@ class RealDebridAPI:
 		compare_title = re.sub(r'[^A-Za-z0-9]+', '.', title.replace('\'', '').replace('&', 'and').replace('%', '.percent')).lower()
 		elapsed_time, transfer_finished = 0, False
 		extensions = supported_video_extensions()
+		logger("thong tin magnet: ", str(magnet_url))
 		try:
 			torrent = self.add_magnet(magnet_url)
+			logger("thong tin torrent: ", str(torrent))
 			torrent_id = torrent['id']
 			self.add_torrent_select(torrent_id, 'all')
 			torrent_info = self.user_cloud_info_check(torrent_id)
@@ -258,6 +263,62 @@ class RealDebridAPI:
 				return file_url
 			else: self.delete_torrent(torrent_id)
 		except:
+			try:
+				payload = {'magnet': magnet_url}
+				files=[
+
+				]
+				headers = {
+				'Authorization': "Bearer " + torbox_api_key,
+				}
+
+				response = requests.request("POST", torbox_base_url + "api/torrents/createtorrent", headers=headers, data=payload, files=files)
+				logger("tao torren torbox: ", str(response.json()))
+				data = response.json()['data']
+				url = "https://api.torbox.app/v1/api/torrents/mylist?id=" + str(data['torrent_id'])
+
+				payload = {}
+				headers = {
+				'Authorization': 'Bearer ' + torbox_api_key,
+				}
+
+				response = requests.request("GET", url, headers=headers, data=payload)
+				logger("thong tin torrent: ", str(response.json()))
+				selected_files = [(idx, i) for idx, i in enumerate([i for i in response.json()['data']['files'] if i['name'].lower().endswith(tuple(extensions))])]
+				# selected_files = sorted(selected_files, key=lambda x: x['size'], reverse=True)
+				logger("selected_files: ", str(selected_files))
+				match = False
+				if season:
+					correct_files = []
+					correct_file_check = False
+					for value in selected_files:
+						correct_file_check = seas_ep_filter(season, episode, value[1]['name'])
+						if correct_file_check: correct_files.append(value[1]); break
+					logger("correct files: ", str(correct_files))
+					if len(correct_files) == 0: match = False
+					else:
+						for i in correct_files:
+							compare_link = seas_ep_filter(season, episode, i['name'], split=True)
+							compare_link = re.sub(compare_title, '', compare_link)
+							if any(x in compare_link for x in EXTRAS): continue
+							else: match = True; break
+					if match: index = [i[1]['id'] for i in selected_files if i[1]['name'] == correct_files[0]['name']]
+				else:
+					for value in selected_files:
+						filename = re.sub(r'[^A-Za-z0-9-]+', '.', value[1]['name'].rsplit('/', 1)[1].replace('\'', '').replace('&', 'and').replace('%', '.percent')).lower()
+						filename_info = filename.replace(compare_title, '')
+						if any(x in filename_info for x in EXTRAS): continue
+						match, index = True, value[1]['id']; break
+				logger("index duoc chon: ", str(index))
+
+				url = "https://api.torbox.app/v1/api/torrents/requestdl?token=" + torbox_api_key +"&torrent_id=" + str(data["torrent_id"]) + "&file_id=" + str(index[0])
+
+				response = requests.request("GET", url)
+				logger("lay link truc tiep: ", str(response.json()))
+				return response.json()["data"]
+			except Exception as ee:
+				traceback.print_exc()
+				logger("loi ham lay link: ", f"An error occurred: {ee}")
 			if torrent_id: self.delete_torrent(torrent_id)
 			return None
 

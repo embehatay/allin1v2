@@ -4,7 +4,7 @@ from caches.main_cache import cache_object
 from caches.meta_cache import cache_function
 from modules.settings import tmdb_api_key, get_meta_filter, get_language, generic_list_sorting
 from modules.kodi_utils import make_session, tmdb_dict_removals, remove_keys
-# from modules.kodi_utils import logger
+from modules.kodi_utils import logger
 
 EXPIRY_4_HOURS, EXPIRY_1_DAY, EXPIRY_2_DAYS, EXPIRY_1_WEEK = 4, 24, 48, 168
 base_url = 'https://api.themoviedb.org/3'
@@ -67,8 +67,10 @@ def tmdb_movies_discover(query, page_no):
 
 def tmdb_movies_popular(page_no):
 	string = 'tmdb_movies_popular_%s' % page_no
-	url = '%s/movie/popular?api_key=%s&language=en-US&region=US&with_original_language=en&page=%s' % (base_url, tmdb_api_key(), page_no)
-	return cache_object(get_data, string, url, json=False, expiration=EXPIRY_2_DAYS)
+	url = '%s/movie/popular?api_key=%s&language=vi-VN&region=VN&with_original_language=en&page=%s' % (base_url, tmdb_api_key(), page_no)
+	logger("url hihi: ", str(url))
+	# return cache_object(get_data, string, url, json=False, expiration=EXPIRY_2_DAYS)
+	return get_data(url=url)
 
 def tmdb_movies_popular_today(page_no):
 	string = 'tmdb_movies_popular_today_%s' % page_no

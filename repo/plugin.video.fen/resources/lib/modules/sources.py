@@ -7,7 +7,7 @@ from modules.debrid import debrid_enabled
 from modules.player import FenPlayer
 from modules.source_utils import get_cache_expiry, make_alias_dict
 from modules.utils import clean_file_name, string_to_float, safe_string, remove_accents, get_datetime, append_module_to_syspath, manual_function_import, manual_module_import
-# logger = kodi_utils.logger
+logger = kodi_utils.logger
 
 ls, get_icon, notification, sleep, int_window_prop = kodi_utils.local_string, kodi_utils.get_icon, kodi_utils.notification, kodi_utils.sleep, kodi_utils.int_window_prop
 select_dialog, confirm_dialog, get_setting, close_all_dialog = kodi_utils.select_dialog, kodi_utils.confirm_dialog, kodi_utils.get_setting, kodi_utils.close_all_dialog
@@ -336,6 +336,7 @@ class Sources():
 
 	def display_results(self, results):
 		window_format = results_format()
+		logger("ahaha", str(results))
 		action, chosen_item = open_window(('windows.sources', 'SourcesResults'), 'sources_results.xml',
 				window_format=window_format, window_style=results_style(), window_id=results_xml_window_number(window_format), results=results, meta=self.meta,
 				scraper_settings=self.scraper_settings, prescrape=self.prescrape, filters_ignored=self.filters_ignored, uncached_torrents=self.uncached_torrents)
