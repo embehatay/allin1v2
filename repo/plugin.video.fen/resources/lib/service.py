@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from modules import service_functions
-from modules.kodi_utils import Thread, xbmc_monitor, logger, local_string as ls
+from modules.kodi_utils import Thread, xbmc_monitor, logger, local_string as ls, get_setting
 
 fen_str = ls(32036).upper()
 on_notification_actions = service_functions.OnNotificationActions()
@@ -37,6 +37,7 @@ class FenMonitor(xbmc_monitor):
 	def onNotification(self, sender, method, data):
 		on_notification_actions.run(sender, method, data)
 
+logger('Torbox co bat khong: ', str(get_setting('enable_torbox')))
 logger(fen_str, 'Main Monitor Service Starting')
 logger(fen_str, 'Settings Monitor Service Starting')
 FenMonitor().waitForAbort()

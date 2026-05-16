@@ -952,6 +952,11 @@
 		<category id="meta accounts" label="32684" help="">
 			<!-- Trakt -->
 			<group id="1" label="32037">
+				<setting id="enable_torbox" type="boolean" label="33193" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
 				<setting id="trakt.amble" type="string" label="33152" help="">
 					<level>0</level>
 					<default/>

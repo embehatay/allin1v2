@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 from modules.router import routing, sys_exit_check
-import requests
 import urllib3.util.connection
 # from modules.kodi_utils import logger
 
