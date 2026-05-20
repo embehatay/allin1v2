@@ -233,6 +233,7 @@ class RealDebridAPI:
 				return None
 			selected_files = [(idx, i) for idx, i in enumerate([i for i in torrent_info['files'] if i['selected'] == 1 and i['path'].lower().endswith(tuple(extensions))])]
 			selected_files = sorted(selected_files, key=lambda x: x[1]['bytes'], reverse=True)
+			logger("thong tin selected_files: ", str(selected_files))
 			match = False
 			if season:
 				correct_files = []

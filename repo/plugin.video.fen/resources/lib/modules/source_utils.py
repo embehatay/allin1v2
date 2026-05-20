@@ -4,7 +4,7 @@ from modules import kodi_utils
 from modules.metadata import episodes_meta
 from modules.settings import date_offset, metadata_user_info
 from modules.utils import adjust_premiered_date, get_datetime, jsondate_to_datetime, subtract_dates
-# logger = kodi_utils.logger
+logger = kodi_utils.logger
 
 unquote, unquote_plus, supported_media, string, int_window_prop = kodi_utils.unquote, kodi_utils.unquote_plus, kodi_utils.supported_media, str, kodi_utils.int_window_prop
 json, set_property, notification = kodi_utils.json, kodi_utils.set_property, kodi_utils.notification
@@ -143,7 +143,8 @@ def seas_ep_filter(season, episode, release_title, split=False, return_match=Fal
 	str_ep_plus_1, str_ep_minus_1 = string(episode+1), string(episode-1)
 	release_title = re.sub(r'[^A-Za-z0-9-]+', '.', unquote(release_title).replace('\'', '')).lower()
 	string1 = r'(s<<S>>[.-]?e[p]?[.-]?<<E>>[.-])'
-	string2 = r'(season[.-]?<<S>>[.-]?episode[.-]?<<E>>[.-])|([s]?<<S>>[x.]<<E>>[.-])'
+	string2 = r'(season[.-]?<<S>>[.-]?episode[.-]?<<E>>[.-])'
+	# string2 = r'(season[.-]?<<S>>[.-]?episode[.-]?<<E>>[.-])|([s]?<<S>>[x.]<<E>>[.-])'
 	string3 = r'(s<<S>>e<<E1>>[.-]?e?<<E2>>[.-])'
 	string4 = r'([.-]<<S>>[.-]?<<E>>[.-])'
 	string5 = r'(episode[.-]?<<E>>[.-])'
@@ -164,6 +165,8 @@ def seas_ep_filter(season, episode, release_title, split=False, return_match=Fal
 	string_list_append(string4.replace('<<S>>', str_season).replace('<<E>>', episode_fill))
 	final_string = '|'.join(string_list)
 	reg_pattern = re.compile(final_string)
+	logger('reg_pattern:', str(reg_pattern))
+	logger('release_title:', str(release_title))
 	if split: return release_title.split(re.search(reg_pattern, release_title).group(), 1)[1]
 	elif return_match: return re.search(reg_pattern, release_title).group()
 	else: return bool(re.search(reg_pattern, release_title))
