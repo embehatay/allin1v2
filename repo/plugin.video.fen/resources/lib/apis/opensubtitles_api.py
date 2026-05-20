@@ -5,6 +5,7 @@ from zipfile import ZipFile
 from datetime import timedelta
 from caches.main_cache import main_cache
 from modules.kodi_utils import requests, json, notification, sleep, delete_file, rename_file, quote, logger, exists
+import traceback
 # from modules.kodi_utils import logger
 
 user_agent = 'Fen v1.0'
@@ -35,11 +36,14 @@ class OpenSubtitlesAPI:
 		try: 
 			result = json.loads(self._post(chosen_sub, retry=True).text)
 			download_url = result["link"]
-		except: return
-		result = self._get(download_url, stream=True, retry=True)
-		with open(temp_zip, 'wb') as f: f.write(result.content)
-		if exists(final_path): delete_file(final_path)
-		rename_file(temp_zip, final_path)
+			result = self._get(download_url, stream=True, retry=True)
+			with open(temp_zip, 'wb') as f: f.write(result.content)
+			if exists(final_path): delete_file(final_path)
+			rename_file(temp_zip, final_path)
+		
+		except: 
+			traceback.print_exc()
+			return
 		return final_path
 
 	def _get(self, url, stream=False, retry=False):

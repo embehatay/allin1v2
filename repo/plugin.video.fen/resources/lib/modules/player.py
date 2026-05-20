@@ -630,7 +630,7 @@ class Subtitles(xbmc_player):
             if chosen_source == 'os':
                 logger("Subtile duoc chon: ", str(os_results[chosen_sub]) + " tu nguon " + str(chosen_source))
                 final_filename = sub_filename + '_' + \
-                    str(os_results[chosen_sub]['attributes']['release']
+                    str(os_results[chosen_sub]['attributes']['slug']
                         ) + '.%s.%s' % (self.language, sub_format)
             elif chosen_source == 'ss':
                 logger("Subtile duoc chon: ", str(ss_results[chosen_sub]) + " tu nguon " + str(chosen_source))
