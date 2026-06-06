@@ -214,7 +214,7 @@ class RealDebridAPI:
 		logger("thong tin magnet: ", str(magnet_url))
 		try:
 			torrent = self.add_magnet(magnet_url)
-			logger("thong tin torrent: ", str(torrent))
+			logger("thong tin torrent real debrid: ", str(torrent))
 			torrent_id = torrent['id']
 			self.add_torrent_select(torrent_id, 'all')
 			torrent_info = self.user_cloud_info_check(torrent_id)
@@ -310,7 +310,7 @@ class RealDebridAPI:
 							filename = re.sub(r'[^A-Za-z0-9-]+', '.', value[1]['name'].rsplit('/', 1)[1].replace('\'', '').replace('&', 'and').replace('%', '.percent')).lower()
 							filename_info = filename.replace(compare_title, '')
 							if any(x in filename_info for x in EXTRAS): continue
-							match, index = True, value[1]['id']; break
+							match, index = True, [value[1]['id']]; break
 					logger("index duoc chon: ", str(index))
 
 					url = "https://api.torbox.app/v1/api/torrents/requestdl?token=" + torbox_api_key +"&torrent_id=" + str(data["torrent_id"]) + "&file_id=" + str(index[0])
