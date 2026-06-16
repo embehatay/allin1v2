@@ -521,16 +521,22 @@ class Subtitles(xbmc_player):
                     query, tmdb_id, self.language, os_results, season, episode))
                 sd_thread = ThreadWithReturnValue(target=self.sd.search, args=(
                     query, tmdb_id, self.language, sd_results, season, episode))
+                ss_thread = ThreadWithReturnValue(target=self.ss.search, args=(
+                    fenPlayer.imdb_id, self.language))
                 os_thread.start()
                 sd_thread.start()
+                ss_thread.start()
                 if os_thread.join():
                     os_results = os_thread.join()
                 if sd_thread.join():
                     sd_results = sd_thread.join()
+                if ss_thread.join():
+                    ss_results = ss_thread.join()
             if len(os_results) == 0 and len(sd_results) == 0 and len(ss_results) == 0:
                 _notification(
                     "Ko có sub nào trên opensubtitles.com và Subdl", 1500)
                 return False
+            logger("ss_results: ", str(ss_results))
             try:
                 video_path = self.getPlayingFile()
             except:
@@ -540,7 +546,7 @@ class Subtitles(xbmc_player):
             video_path = os.path.basename(video_path)
             results = os_results + sd_results + ss_results
             subtitle = None
-            chosen_source = 'os'
+            chosen_source = None
             if self.subs_action == '1':
                 self.pause()
                 # choices = [i for i in result if i['SubLanguageID'] == self.language and i['SubSumCD'] == '1']
@@ -583,21 +589,21 @@ class Subtitles(xbmc_player):
                             chosen_sub = index
 
                     if len(os_results) == 0:
-                        for index, result in enumerate(sd_results):
-                            current_score = 0
-                            name = result['release_info']
-                            if re.search('720p', name, re.IGNORECASE):
-                                current_score += 1
-                            if re.search('1080p', name, re.IGNORECASE):
-                                current_score += 2
-                            if re.search('2160p', name, re.IGNORECASE):
-                                current_score += 3
-                            if re.search('bluray', name, re.IGNORECASE):
-                                current_score += 4
-                            if current_score > score:
-                                score = current_score
-                                chosen_sub = index
-                                chosen_source = 'sd'
+                        # for index, result in enumerate(sd_results):
+                        #     current_score = 0
+                        #     name = result['release_name']
+                        #     if re.search('720p', name, re.IGNORECASE):
+                        #         current_score += 1
+                        #     if re.search('1080p', name, re.IGNORECASE):
+                        #         current_score += 2
+                        #     if re.search('2160p', name, re.IGNORECASE):
+                        #         current_score += 3
+                        #     if re.search('bluray', name, re.IGNORECASE):
+                        #         current_score += 4
+                        #     if current_score > score:
+                        #         score = current_score
+                        #         chosen_sub = index
+                        #         chosen_source = 'sd'
 
                         for index, result in enumerate(ss_results):
                             current_score = 0

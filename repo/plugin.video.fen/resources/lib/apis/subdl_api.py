@@ -31,7 +31,7 @@ class SubDLAPI:
 		try: response = json.loads(response.text)
 		except: return
 		# main_cache.set(cache_name, response, expiration=timedelta(hours=24))
-		logger("Ket qua search: ", str(response))
+		logger("Ket qua search subdl: ", str(response))
 		return response['subtitles']
 
 	def download(self, chosen_sub, filepath, temp_zip, temp_path, final_path):

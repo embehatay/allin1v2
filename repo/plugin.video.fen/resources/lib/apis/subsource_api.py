@@ -25,8 +25,12 @@ class SubsourceAPI:
 		self.episode = None
 
 	def search(self, imdb_id, season=None, episode=None):
-		self.episode = int(episode)
-		payload = {"searchType": "imdb", "season": season, "imdb": imdb_id}
+		logger("Có vào đây ss", "hihi")
+		if episode:
+			self.episode = int(episode)
+			payload = {"searchType": "imdb", "season": season, "imdb": imdb_id}
+		else:
+			payload = {"searchType": "imdb", "imdb": imdb_id}
 		try: 
 			response = requests.request("GET", self.__search, headers=self.headers, params=payload, timeout=5000)
 			logger("Ket qua search sub source: ", str(response))
