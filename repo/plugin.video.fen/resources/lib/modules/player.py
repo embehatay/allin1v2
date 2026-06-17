@@ -546,7 +546,7 @@ class Subtitles(xbmc_player):
             video_path = os.path.basename(video_path)
             results = os_results + sd_results + ss_results
             subtitle = None
-            chosen_source = None
+            chosen_source = 'os'
             if self.subs_action == '1':
                 self.pause()
                 # choices = [i for i in result if i['SubLanguageID'] == self.language and i['SubSumCD'] == '1']
@@ -643,7 +643,7 @@ class Subtitles(xbmc_player):
                 final_filename = sub_filename + '_' + \
                     str(ss_results[chosen_sub]['releaseInfo']
                         ) + '.%s.%s' % (self.language, sub_format)
-            else:
+            elif chosen_source == 'sd':
                 logger("Subtile duoc chon: ", str(sd_results[chosen_sub]) + " tu nguon " + str(chosen_source))
                 final_filename = sub_filename + '_' + \
                     str(sd_results[chosen_sub]['release_name']) + \
