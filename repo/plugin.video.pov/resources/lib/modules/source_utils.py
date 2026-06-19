@@ -156,7 +156,7 @@ def extras_filter():
 			'unused', 'footage', 'feature', 'featurette', 'making.of', 'behind.the.scenes')
 
 SEAS_EP_REGEX = re.compile('|'.join((
-	r's(?:eason)? \s* (\d+) [xX\s._-]* e(?:p(?:isode)?)? [\s._-]* (\d+) (?: [\s._-]* e? (?:p(?:isode)?)? \s* (\d+) )?',
+	r's(?:eason)? [\s*.?] (\d+) [xX\s._-]* e(?:p(?:isode)?)? [\s._-]* (\d+) (?: [\s._-]* e? (?:p(?:isode)?)? \s* (\d+) )?',
 	r'(\d+) \s* [xX] \s* (\d+) (?: [\s._-]* (?:[xX]|-)? \s* (\d+) )?',
 	r'\b (?: ep(?:isode)? | [._-]e ) [\s._-]* (\d+)'
 )), flags=re.I | re.X)

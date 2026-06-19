@@ -56,6 +56,8 @@ class source:
 			return self.sources
 
 	def get_sources(self, url):
+		kodi_utils.logger("url get source: ", url)
+		kodi_utils.logger("episode title: ", self.episode_title)
 		try:
 			results = client.request(url, timeout=self.timeout)
 			if not results: return
