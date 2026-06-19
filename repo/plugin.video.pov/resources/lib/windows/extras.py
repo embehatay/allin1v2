@@ -1,12 +1,12 @@
 import json
-from threading import Thread
+import concurrent.futures
 from datetime import datetime, timedelta
 from windows import BaseDialog, location, videoplayer
 from caches import watched_cache as ws
 from indexers import metadata, tmdb_api, imdb_api
 from menus import images, people
 from modules import settings, dialogs
-from modules.downloader import runner
+from modules.downloader import factory
 from modules.meta_lists import networks
 from modules.utils import get_datetime
 from modules.kodi_utils import media_path, notification, close_all_dialog, hide_busy_dialog, ok_dialog, fetch_kodi_imagecache, local_string as ls
@@ -39,18 +39,19 @@ class Extras(BaseDialog):
 		self.set_properties()
 
 	def onInit(self):
-		for i in (
-			Thread(target=self.make_imdb_extended_info), Thread(target=self.set_poster),
-			Thread(target=self.make_cast), Thread(target=self.make_recommended),
-			Thread(target=self.make_videos), Thread(target=self.make_year),
-			Thread(target=self.make_genres), Thread(target=self.make_network),
-			Thread(target=self.make_artwork, args=('posters',)),
-			Thread(target=self.make_artwork, args=('backdrops',))
-		): i.start()
-		if self.mediatype == 'movie': Thread(target=self.make_collection).start()
-		else: self.setProperty('tikiskins.extras.make.collection', 'false')
-		self.make_options()
-		self.setFocusId(self.focus_id)
+		tpe = concurrent.futures.ThreadPoolExecutor()
+		try:
+			futures = [tpe.submit(k, *v) for k, *v in (
+			(self.make_imdb_extended_info,), (self.make_recommended,),
+			(self.make_videos,), (self.make_year,), (self.make_genres,), (self.make_network,),
+			(self.set_poster,), (self.make_artwork, 'posters'), (self.make_artwork, 'backdrops'))]
+			if self.mediatype == 'movie': futures.append(tpe.submit(self.make_collection))
+			else: self.setProperty('tikiskins.extras.make.collection', 'false')
+			self.make_cast()
+			self.make_options()
+			concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_COMPLETED)
+			self.setFocusId(self.focus_id)
+		finally: tpe.shutdown(False)
 
 	def run(self):
 		self.doModal()
@@ -79,7 +80,7 @@ class Extras(BaseDialog):
 					'thumb_url': image.replace('w780', {posters_id: 'w185', backdrops_id: 'w300'}[focus_id]),
 					'image_url': image.replace('w780', 'original')
 				}
-				return runner(params)
+				return factory(params)
 		if not self.control_id or action not in self.selection_actions: return
 		if self.control_id == actions_id:
 			try: chosen_var = int(self.get_listitem(self.control_id).getProperty('tikiskins.extras.actions'))
@@ -98,7 +99,7 @@ class Extras(BaseDialog):
 			elif chosen_var == trailer_id:
 				chosen = dialogs.trailer_choice(self.mediatype, self.poster, self.tmdb_id, self.meta['trailer'], self.meta['all_trailers'])
 				if not chosen: return ok_dialog()
-				elif chosen == 'canceled': return
+				if chosen == 'canceled': return
 				kwargs = {'meta': self.meta, 'is_widget': self.is_widget, 'is_home': self.is_home}
 				return videoplayer(chosen, self.close, type(self)('extras.xml', location, **kwargs).run)
 			elif chosen_var == extrainfo_id:

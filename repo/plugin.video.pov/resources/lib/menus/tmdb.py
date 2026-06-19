@@ -68,9 +68,9 @@ def build_tmdb_list(params):
 	max_threads = int(kodi_utils.get_setting('pov.max_threads', '100'))
 	use_alphabet = nav_jump_use_alphabet() > 0
 	user, name, list_id = params.get('user'), params.get('name'), params.get('list_id')
-	letter, page = params.get('new_letter', 'None'), int(params.get('new_page', '1'))
+	page = int(params.get('new_page', '1'))
 	results = tmdb_api.list_details(list_id)
-	if paginate() and results: process_list, total_pages = paginate_list(results, page, letter, page_limit())
+	if paginate() and results: process_list, total_pages = paginate_list(results, page, page_limit())
 	else: process_list, total_pages = results, 1
 	movies, tvshows = Movies({'id_type': 'tmdb_id'}), TVShows({'id_type': 'tmdb_id'})
 	for idx, tag in enumerate(process_list, 1):
@@ -95,7 +95,7 @@ def build_tmdb_list(params):
 		kodi_utils.add_dir(__handle__, url, jump2_str, iconImage=item_jump, isFolder=False)
 	kodi_utils.add_items(__handle__, items)
 	if total_pages > page:
-		url = {'mode': 'build_tmdb_list', 'new_page': page + 1, 'new_letter': letter,
+		url = {'mode': 'build_tmdb_list', 'new_page': page + 1,
 				'user': user, 'name': name, 'list_id': list_id}
 		kodi_utils.add_dir(__handle__, url, nextpage_str)
 	kodi_utils.set_category(__handle__, name)
@@ -112,7 +112,7 @@ def update_tmdb_list(params):
 
 def edit_tmdb_list(params):
 	image_resolution = get_resolution()
-	heading = ls(tmdb_api.tmdb_list_heading).replace('[B]', '').replace('[/B]', '')
+	heading = ls(tmdb_api.tmdblist_heading).replace('[B]', '').replace('[/B]', '')
 	choices = [
 		('name', params['name']),
 		('poster', params['poster']),
@@ -128,7 +128,7 @@ def edit_tmdb_list(params):
 		default_icon}
 		for i in choices
 	]
-	kwargs = {'items': json.dumps(list_items), 'heading': heading, 'multi_line': 'true'}
+	kwargs = {'items': json.dumps(list_items), 'heading': heading}
 	choice = kodi_utils.select_dialog([i[0] for i in choices], **kwargs)
 	if choice in ('cancel', None): return
 	if   'name' in choice:
@@ -136,7 +136,7 @@ def edit_tmdb_list(params):
 		params['name'] = name.strip() or params['name']
 	elif 'public' in choice:
 		text = 'Make %s Private?' % params['name']
-		params['public'] = 'true' if not kodi_utils.confirm_dialog(text=text, top_space=True) else 'false'
+		params['public'] = 'true' if not kodi_utils.confirm_dialog(text=text) else 'false'
 	elif choice in ('poster', 'fanart'):
 		art = artwork_choice_tmdb_list(choice, params['list_id'], params['name'], image_resolution, default_icon)
 		params[choice] = params[choice] if art is None else art
@@ -164,6 +164,6 @@ def artwork_choice_tmdb_list(key, list_id, list_title, resolution, icon):
 	]
 	choices += [('clear', 'Clear', icon)]
 	list_items = [{'line1': item[1], 'line2': item[0], 'icon': item[2]} for item in choices]
-	kwargs = {'items': json.dumps(list_items), 'heading': list_title, 'enumerate': 'true', 'multi_line': 'true'}
+	kwargs = {'items': json.dumps(list_items), 'heading': list_title, 'enumerate': 'true'}
 	return kodi_utils.select_dialog([i[0] for i in choices], **kwargs)
 

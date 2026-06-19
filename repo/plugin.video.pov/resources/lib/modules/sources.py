@@ -8,11 +8,8 @@ from windows import open_window, create_window
 from caches.providers_cache import ExternalProvidersCache
 from indexers.metadata import movie_meta, tvshow_meta, season_episodes_meta, get_title
 from modules.debrid import debrid_enabled, debrid_type_enabled, Source, DebridCheck
-from modules import player, kodi_utils, settings
-from modules.source_utils import internal_sources
-from modules.source_utils import pack_enable_check, sources_quality_count
-from modules.source_utils import get_cache_expiry, get_filename_match, get_file_info, normalize
-from modules.utils import clean_file_name, safe_string, string_to_float, remove_accents, get_datetime
+from modules import player, kodi_utils, settings, source_utils
+from modules.utils import safe_string, string_to_float, get_datetime
 #from modules.kodi_utils import logger
 
 POVPlayer, progressDialogBG, notification = player.POVPlayer, kodi_utils.progressDialogBG, kodi_utils.notification
@@ -22,6 +19,9 @@ ls, monitor, sleep, get_setting = kodi_utils.local_string, kodi_utils.monitor, k
 check_prescrape_sources, quality_filter, sort_to_top = settings.check_prescrape_sources, settings.quality_filter, settings.sort_to_top
 results_xml_style, results_xml_window_number = settings.results_xml_style, settings.results_xml_window_number
 default_internal_scrapers, cloud_scrapers = settings.default_internal_scrapers, settings.cloud_scrapers
+internal_sources, clean_file_name = source_utils.internal_sources, source_utils.clean_file_name
+pack_enable_check, sources_quality_count = source_utils.pack_enable_check, source_utils.sources_quality_count
+get_cache_expiry, get_file_info = source_utils.get_cache_expiry, source_utils.get_file_info
 quality_ranks = {'4K': 1, '1080p': 2, '720p': 3, 'SD': 4, 'SCR': 5, 'CAM': 5, 'TELE': 5}
 av1_filter_key, hevc_filter_key, hdr_filter_key, dolby_vision_filter_key = '[B]AV1[/B]', '[B]HEVC[/B]', '[B]HDR[/B]', '[B]D/VISION[/B]'
 total_format, int_format, ext_format = '[COLOR %s][B]%s[/B][/COLOR]', '[COLOR %s][B]Int: [/B][/COLOR]%s', '[COLOR %s][B]Ext: [/B][/COLOR]%s'
@@ -80,7 +80,8 @@ class Sources:
 		self.include_prerelease_results, self.include_3D_results = settings.include_prerelease_3d_results()
 		self.quality_filter = self._quality_filter()
 		self.limit_resolve = max(int(get_setting('limit_resolve', '10')), 1)
-		self.full_screen = get_setting('load_action') == '1'
+		if get_property('pov_total_autoplays') != '': self.full_screen = False
+		else: self.full_screen = get_setting('load_action') == '1'
 		self.size_filter = int(get_setting('results.size_filter', '0'))
 		self.include_unknown_size = get_setting('results.include.unknown.size') == 'true'
 		self.sleep_time = settings.display_sleep_time()
@@ -102,7 +103,7 @@ class Sources:
 			if self.active_external: self.activate_external_providers()
 			self.orig_results = self.collect_results()
 			results = self.process_results(self.orig_results)
-		self.meta.update({'scrape_sources': len(results), 'scrape_time': time.monotonic() - start_time})
+		self.meta.update({'scrape_time': time.monotonic() - start_time})
 		if not results: return self._process_post_results()
 		self.play_source(results)
 
@@ -115,20 +116,18 @@ class Sources:
 			for i in self.threads: i.start()
 		if self.active_external or self.background:
 			if self.active_external:
-				self.meta.update({'full_screen': self.full_screen, 'scrape_timeout': self.timeout})
 				self.external_args = (
+					self.meta,
 					self.external_providers,
 					self.debrid_torrent_enabled,
 #					self.internal_scraper_names,
 					self.threads,
 					self.prescrape_sources,
-					self.display_uncached_torrents,
-					self.meta,
 					self.progress_dialog,
 					self.disabled_ignored
 				)
 				self.activate_providers('external', Manager, False)
-#			if self.providers: [i.join() for i in self.threads]
+			elif self.providers and self.background: [i.join() for i in self.threads]
 		else: self.scrapers_dialog('internal')
 		self._kill_progress_dialog()
 		return self.sources
@@ -241,6 +240,7 @@ class Sources:
 		self.filters_ignored = True
 		results = self.sort_results(self.orig_results)
 		results = self._sort_first(results)
+		if not results: return self._no_results()
 		return self.play_source(results)
 
 	def _no_results(self):
@@ -312,7 +312,7 @@ class Sources:
 						if monitor.abortRequested(): break
 						elif self.progress_dialog and self.progress_dialog.iscanceled(): break
 						percent = int(((total_items := len(items))-count)/total_items*100)
-						name = item['name'].replace('.', ' ').replace('-', ' ').upper()
+						name = (item.get('URLName') or item['name']).upper()
 						line1 = item.get('scrape_provider'), item.get('cache_provider'), item.get('provider')
 						if source_index is not None: line1 = ('[B]%02d[/B]' % (source_index + count), *line1)
 						line2 = item.get('size_label', ''), item.get('extraInfo', '')
@@ -382,12 +382,14 @@ class Sources:
 		return quality_ranks[quality]
 
 	def _sort_language_to_top(self, results):
-		from xbmc import convertLanguage as cl, ISO_639_1, ISO_639_2
+		from modules.meta_lists import meta_languages
 		try:
-			language = self.priority_language, cl(self.priority_language, ISO_639_2), cl(self.priority_language, ISO_639_1)
-			if self.priority_language == 'Spanish': language += 'latino', 'lat', 'esp'
-			pattern = r'\b(%s)\b' % '|'.join(i for i in language if i)
-			sort_first = [i for i in results if re.search(pattern, i.get('name_info', ''), re.I)]
+			tokens = meta_languages[self.priority_language].values()
+			tokens = [re.sub(r'\W', '', self.priority_language), *tokens]
+			if 'Spanish' in self.priority_language: tokens += 'latino', 'lat', 'esp'
+			if 'Brazil' in self.priority_language: tokens += 'portuguese', 'por', 'pt'
+			pattern = re.compile(r'\b(%s)\b' % '|'.join(i for i in tokens if i), re.I)
+			sort_first = [i for i in results if pattern.search(i.get('name_info', ''))]
 			sort_last = [i for i in results if i not in sort_first]
 			results = sort_first + sort_last
 		except: pass
@@ -444,8 +446,8 @@ class Sources:
 				except: pass
 			else: meta = movie_meta('tmdb_id', self.tmdb_id, meta_user_info, current_date)
 		meta.update({
-			'background': self.background, 'mediatype': self.mediatype,
-			'season': self.season, 'episode': self.episode
+			'full_screen': self.full_screen, 'scrape_timeout': self.timeout, 'background': self.background,
+			'mediatype': self.mediatype, 'season': self.season, 'episode': self.episode
 		})
 		if self.custom_title: meta['custom_title'] = self.custom_title
 		if self.custom_year: meta['custom_year'] = self.custom_year
@@ -465,17 +467,18 @@ class Sources:
 		return meta
 
 	def _make_alias_dict(self, meta, title):
-		aliases = []
-		meta_title = meta['title']
-		original_title = meta['original_title']
-		alternative_titles = meta.get('alternative_titles', [])
-		country_codes = set([i.replace('GB', 'UK') for i in meta.get('country_codes', [])])
-		if meta_title not in alternative_titles: alternative_titles.append(meta_title)
-		if original_title not in alternative_titles: alternative_titles.append(original_title)
-		if alternative_titles: aliases = [{'title': i, 'country': ''} for i in alternative_titles]
-		if country_codes: aliases.extend([{'title': '%s %s' % (title, i), 'country': ''} for i in country_codes])
-		normalized = ({'title': normalize(i['title']), 'country': i['country']} for i in aliases)
-		aliases.extend(i for i in normalized if i not in aliases)
+		raw_titles = {meta['title'], meta['original_title']}
+		raw_titles.update(meta.get('alternative_titles', []))
+		aliases = [{'title': i, 'country': ''} for i in raw_titles]
+		aliases_append = aliases.append
+		country_codes = {i.replace('GB', 'UK') for i in meta.get('country_codes', [])}
+		aliases.extend({'title': '%s %s' % (title, i), 'country': ''} for i in country_codes)
+		seen = {(i['title'], i['country']) for i in aliases}
+		for i in aliases[:]:
+			norm_pair = (i['title'], i['country'])
+			if norm_pair not in seen and not seen.add(norm_pair):
+				aliases_append({'title': i['title'], 'country': i['country']})
+		aliases = [i for i in aliases if safe_string(i['title']).strip()]
 		return aliases
 
 	def _get_search_year(self, meta):
@@ -489,9 +492,9 @@ class Sources:
 
 	def _get_ep_name(self, meta):
 		if meta.get('mediatype') == 'episode':
-			ep_name = meta.get('ep_name')
-			try: ep_name = safe_string(remove_accents(ep_name))
-			except: ep_name = safe_string(ep_name)
+			ep_name = meta.get('ep_name') or ''
+			try: ep_name = safe_string(ep_name)
+			except: pass
 		else: ep_name = None
 		return ep_name
 
@@ -534,14 +537,13 @@ class Manager:
 		return wrapper
 
 	def __init__(
-		self, source_dict, debrid_torrents, internal_scrapers, prescrape_sources,
-		display_uncached_torrents, meta, progress_dialog, disabled_ignored=False
+		self, meta, source_dict, debrid_torrents, internal_scrapers,
+		prescrape_sources, progress_dialog, disabled_ignored=False
 	):
 		self.meta = meta
 		self.background, self.full_screen = self.meta.get('background', False), self.meta.get('full_screen', False)
 		self.source_dict, self.debrid_torrents = source_dict, debrid_torrents
 		self.internal_scrapers, self.prescrape_sources = internal_scrapers, prescrape_sources
-		self.display_uncached_torrents = display_uncached_torrents
 		self.disabled_ignored, self.progress_dialog = disabled_ignored, progress_dialog
 		self.internal_activated = len(self.internal_scrapers) > 0
 		self.internal_prescraped = len(self.prescrape_sources) > 0
@@ -585,9 +587,11 @@ class Manager:
 				self.threads.add(fut)
 			self.wait(debrid_check=True)
 			for name, hashes in ((fut.name, fut.result() if fut.done() else []) for fut in self.threads):
-				status = ('Unchecked %s' if name in ('real-debrid', 'alldebrid') else 'Uncached %s') % name
-				self.final_sources.extend({**i, 'cache_provider': name, 'debrid': name} for i in torrent_sources if i['hash'] in hashes)
-				self.final_sources.extend({**i, 'cache_provider': status, 'debrid': name} for i in torrent_sources if i['hash'] not in hashes)
+				if name in ('real-debrid', 'alldebrid'): uncached = 'Unchecked %s' % name
+				else: uncached = 'Uncached %s' % name
+				self.final_sources.extend(
+					{**i, 'cache_provider': name if i['hash'] in hashes else uncached, 'debrid': name}
+				for i in torrent_sources)
 		except: notification(32574)
 		finally: tpe.shutdown(False)
 		return self.final_sources
@@ -624,7 +628,8 @@ class Manager:
 						line2 = diag_format % tuple(ext_totals)
 					if len_alive_threads > 5: line3 = string1 % str(len_threads-len_alive_threads)
 					else: line3 = string1 % ', '.join(alive_threads).upper()
-					if self.progress_dialog: self.progress_dialog.update(format_line % (line1, line2, line3), progress)
+					if self.progress_dialog:
+						self.progress_dialog.update(format_line % (line1, line2, line3), progress)
 					else: progressDialogBG.update(progress, line3)
 				except: pass
 			sleep(self.sleep_time)
@@ -681,7 +686,7 @@ class ExternalSource:
 		try:
 			self.mediatype, self.tmdb_id, self.year = info['mediatype'], str(info['tmdb_id']), info['year']
 			self.season, self.episode, self.total_seasons = info['season'], info['episode'], info['total_seasons']
-			self.title, self.orig_title, aliases = normalize(info['title']), info['title'], info['aliases']
+			self.title, self.orig_title, aliases = safe_string(info['title']), info['title'], info['aliases']
 			self.single_expiry, self.season_expiry, self.show_expiry = info['expiry_times']
 			if self.mediatype == 'episode':
 				season_divider = (
@@ -692,7 +697,7 @@ class ExternalSource:
 				self.show_divider = int(self.meta['total_aired_eps'])
 				self.data = {
 					'timeout': self.timeout, 'imdb': info['imdb_id'], 'tvdb': info['tvdb_id'], 'aliases': aliases,
-					'title': normalize(info['ep_name']), 'tvshowtitle': self.title, 'year': self.year,
+					'title': safe_string(info['ep_name']), 'tvshowtitle': self.title, 'year': self.year,
 					'season': str(self.season), 'episode': str(self.episode), 'total_seasons': self.total_seasons
 				}
 				self.get_episode_source(*self.args)
@@ -743,11 +748,9 @@ class ExternalSource:
 				try:
 					i_get = i.get
 					if 'hash' in i: i['hash'] = str(i['hash']).lower()
+					URLName = clean_file_name(i_get('name')).replace('html', ' ')
+					quality, extraInfo = get_file_info(name_info=i_get('name_info'))
 					size, size_label, divider = 0, None, None
-					if 'name' in i: URLName = clean_file_name(i_get('name')).replace('html', ' ').replace('+', ' ').replace('-', ' ')
-					else: URLName = get_filename_match(self.orig_title, i_get('url'), i_get('name'))
-					if 'name_info' in i: quality, extraInfo = get_file_info(name_info=i_get('name_info'))
-					else: quality, extraInfo = get_file_info(url=i_get('url'))
 					try:
 						size = i_get('size')
 						if 'package' in i and not i_get('true_size', False):

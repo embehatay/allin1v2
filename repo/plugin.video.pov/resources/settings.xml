@@ -45,7 +45,7 @@
 		<setting id="pm.expires" label="Premium Expires Notification (days)" type="slider" default="0" range="0,1,7" option="int" visible="eq(-10,true)+!eq(-11,)" />
 		<!-- TorBox-->
 		<setting label="TorBox" type="lsep" />
-		<setting id="torbox_refer_link" type="text" default="https://tinyurl.com/2d2ra6jq" visible="false" />
+		<setting id="tb_refer_link" type="text" default="https://tinyurl.com/2d2ra6jq" visible="false" />
 		<setting id="tb.token" label="tb token" type="text" default="" visible="false" />
 		<setting id="tb.enabled" label="Enable" type="bool" default="true" visible="!eq(-1,)" />
 		<setting id="tb.account_id" label="Customer ID" type="text" default="" enable="false" visible="eq(-1,true)+!eq(-2,)" />
@@ -76,6 +76,7 @@
 	<category label="My Services">
 		<!-- Real Debrid -->
 		<setting label="Real Debrid" type="lsep" />
+		<setting id="rd_refer_link" type="text" default="https://tinyurl.com/2db65q28" visible="false" />
 		<setting id="rd.client_id" type="text" default="" visible="false" />
 		<setting id="rd.secret" type="text" default="" visible="false" />
 		<setting id="rd.refresh" type="text" default="" visible="false" />
@@ -136,6 +137,7 @@
 		<setting id="trakt.expires" type="text" default="" visible="false" />
 		<setting id="trakt.token" type="text" default="" visible="false" />
 		<setting id="trakt_user" label="Username" type="text" default="" enable="false" />
+		<setting id="trakt.limit" label="Limit Trakt Requests" type="bool" default="false" />
 		<setting id="trakt.reverse" label="Reverse Added/Released Sort Direction" type="bool" default="false" />
 		<!-- MDBList -->
 		<setting label="MDBList" type="lsep" />
@@ -233,14 +235,14 @@
 		<setting id="stingers.enable" label="Enable Credit Scene Notification (Movie Stingers)" type="bool" default="false" />
 			<setting id="stingers.threshold" label="Notification Threshold (Seconds After Start)" type="slider" default="10" range="10,10,60" option="int" subsetting="true" visible="eq(-1,true)" />
 		<setting label="Episodes" type="lsep" />
-		<setting id="autoscrape_next_episode" label="Autoscrape Next Episode (source select)" type="bool" default="false" />
-			<setting id="autoscrape_next_window_time" label="Show Notification Before End (secs)" type="slider" default="20" range="10,10,120" option="int" subsetting="true" visible="eq(-1,true)" />
+		<setting id="autoscrape_next_episode" label="Autoscrape Next Episode (Source Select)" type="bool" default="false" />
+			<setting id="autoscrape_next_window_time" label="Show Notification Before End (secs)" type="slider" default="20" range="10,10,180" option="int" subsetting="true" visible="eq(-1,true)" />
 		<setting id="auto_play_episode" label="Auto Play" type="bool" default="false" />
 		<setting id="autoplay_quality_episode" label="Limit Auto Play Quality" type="action" default="SD, 720p, 1080p, 4K" visible="eq(-1,true)" action="RunPlugin(plugin://plugin.video.pov/?mode=set_quality_choice&amp;quality_setting=autoplay_quality_episode)" />
 		<setting id="autoplay_next_episode" label="Autoplay Next Episode" type="bool" default="false" visible="eq(-2,true)" />
 			<setting id="autoplay_next_show_window" label="Show Next Episode Window" type="bool" default="true" subsetting="true" visible="eq(-3,true)+eq(-1,true)" />
 			<setting id="autoplay_next_window_timer_method" label="Show Window Based On" type="enum" default="0" values="Time Remaining|Percentage Played" subsetting="true" visible="eq(-4,true)+eq(-2,true)+eq(-1,true)" />
-			<setting id="autoplay_next_window_time" label="Show Window Before End (secs)" type="slider" default="20" range="10,10,120" option="int" subsetting="true" visible="eq(-5,true)+eq(-3,true)+eq(-2,true)+eq(-1,0)" />
+			<setting id="autoplay_next_window_time" label="Show Window Before End (secs)" type="slider" default="20" range="10,10,180" option="int" subsetting="true" visible="eq(-5,true)+eq(-3,true)+eq(-2,true)+eq(-1,0)" />
 			<setting id="autoplay_next_window_percentage" label="Show Window Before End (%)" type="slider" default="95" range="75,1,99" option="int" subsetting="true" visible="eq(-6,true)+eq(-4,true)+eq(-3,true)+eq(-2,1)" />
 			<setting id="autoplay_next_check_threshold" label="Episodes Watched Before Still Watching Check (0=Off)" type="slider" default="3" range="0,1,10" option="int" subsetting="true" visible="eq(-7,true)+eq(-5,true)" />
 		<setting id="results_quality_episode" label="Limit Quality" type="action" default="SD, 720p, 1080p, 4K" visible="eq(-8,false)" action="RunPlugin(plugin://plugin.video.pov/?mode=set_quality_choice&amp;quality_setting=results_quality_episode)" />
@@ -252,11 +254,11 @@
 		<setting id="volumecheck.enabled" label="Check Playback Volume Before Start of Playback" type="bool" default="false" />
 			<setting id="volumecheck.percent" label="Set Max. Percent Starting Volume (0-100)" type="number" default="50" subsetting="true" visible="eq(-1,true)" />
 		<!-- Subtitles -->
-		<setting label="Subtitles (Wyzie Subs - https://sub.wyzie.io)" type="lsep" />
-		<setting id="subtitles.subs_action" label="Download Subtitles Action" type="enum" default="2" values="Auto|Select|Off" />
-			<setting id="subtitles.apikey" label="API Key" type="text" default="" subsetting="true" visible="!eq(-1,2)" />
-			<setting id="subtitles.language" label="Subtitle Language" type="select" default="English" values="Afrikaans|Albanian|Arabic|Armenian|Basque|Bengali|Bosnian|Breton|Bulgarian|Burmese|Catalan|Chinese|Croatian|Czech|Danish|Dutch|English|Esperanto|Estonian|Finnish|French|Galician|Georgian|German|Greek|Hebrew|Hindi|Hungarian|Icelandic|Indonesian|Italian|Japanese|Kazakh|Khmer|Korean|Latvian|Lithuanian|Luxembourgish|Macedonian|Malay|Malayalam|Manipuri|Mongolian|Montenegrin|Norwegian|Occitan|Persian|Polish|Portuguese|Portuguese(Brazil)|Romanian|Russian|Serbian|Sinhalese|Slovak|Slovenian|Spanish|Swahili|Swedish|Syriac|Tagalog|Tamil|Telugu|Thai|Turkish|Ukrainian|Urdu|Vietnamese" subsetting="true" visible="!eq(-2,2)" />
-			<setting id="subtitles.auto_enable" label="Force Enable Local Subs" type="bool" default="true" subsetting="true" visible="!eq(-3,2)" />
+		<setting label="Subtitles (SubMaker - https://submaker.elfhosted.com)" type="lsep" />
+		<setting id="subtitles.subs_action" label="Download Subtitles Action" type="enum" default="0" values="Off|Auto" />
+			<setting id="subtitles.manifest" label="Manifest Location" type="text" default="" subsetting="true" visible="!eq(-1,0)" />
+			<setting id="subtitles.language" label="Priority Subtitle Language" type="select" default="English" values="English|Arabic|Bengali|Bulgarian|Chinese|Croatian|Czech|Danish|Dutch|Finnish|French|German|Greek|Hebrew|Hindi|Hungarian|Icelandic|Indonesian|Italian|Japanese|Korean|Malay|Norwegian|Persian|Polish|Portuguese|Portuguese (Brazil)|Punjabi|Romanian|Russian|Serbian|Slovenian|Spanish|Swedish|Tagalog|Tamil|Telugu|Thai|Turkish|Ukrainian|Urdu|Vietnamese" subsetting="true" visible="!eq(-2,0)" />
+			<setting id="subtitles.auto_enable" label="Force Enable Local Subs" type="bool" default="true" subsetting="true" visible="!eq(-3,0)" />
 	</category>
 	<!-- Results -->
 	<category label="Results">
@@ -271,7 +273,7 @@
 		<!-- Language -->
 		<setting label="Language" type="lsep" />
 		<setting id="results.language_filter" label="Priority Language Sort to Top" type="bool" default="false" />
-			<setting id="results.language" label="Priority Language" type="select" default="English" values="English|Arabic|Bulgarian|Chinese|Croatian|Czech|Danish|Dutch|Estonian|Finnish|French|German|Greek|Hebrew|Hindi|Hungarian|Indonesian|Italian|Japanese|Korean|Latvian|Lithuanian|Malay|Norwegian|Persian|Polish|Portuguese|Romanian|Russian|Serbian|Slovakian|Slovenian|Spanish|Swedish|Taiwanese|Tamil|Telugu|Thai|Turkish|Ukrainian|Vietnamese" subsetting="true" enable="eq(-1,true)" />
+			<setting id="results.language" label="Priority Language" type="select" default="English" values="English|Arabic|Bengali|Bulgarian|Chinese|Croatian|Czech|Danish|Dutch|Finnish|French|German|Greek|Hebrew|Hindi|Hungarian|Icelandic|Indonesian|Italian|Japanese|Korean|Malay|Norwegian|Persian|Polish|Portuguese|Portuguese (Brazil)|Punjabi|Romanian|Russian|Serbian|Slovenian|Spanish|Swedish|Tagalog|Tamil|Telugu|Thai|Turkish|Ukrainian|Urdu|Vietnamese" subsetting="true" enable="eq(-1,true)" />
 		<!-- Sorting and Filtering -->
 		<setting label="Sorting and Filtering" type="lsep" />
 		<setting id="results.sort_order_display" label="Results Sorting" type="action" default="Quality, Provider, Size" action="RunPlugin(plugin://plugin.video.pov/?mode=results_sorting_choice)" />
@@ -289,19 +291,19 @@
 		<!-- Results Color Highlights -->
 		<setting label="Results Color Highlights" type="lsep" />
 		<setting id="highlight.type" label="Highlight Results Based On" type="enum" default="2" values="Scraper Type|Provider|Quality" />
-			<setting id="hoster.identify" label="Hosters Color" type="action" default="dodgerblue" subsetting="true" visible="eq(-1,0)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=hoster)" />
-			<setting id="torrent.identify" label="Torrents Color" type="action" default="magenta" subsetting="true" visible="eq(-2,0)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=torrent)" />
-			<setting id="provider.rd_colour" label="Real Debrid Color" type="action" default="seagreen" subsetting="true" visible="eq(-3,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=rd)" />
-			<setting id="provider.pm_colour" label="Premiumize Color" type="action" default="orangered" subsetting="true" visible="eq(-4,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=pm)" />
-			<setting id="provider.ad_colour" label="All Debrid Color" type="action" default="goldenrod" subsetting="true" visible="eq(-5,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=ad)" />
-			<setting id="provider.tb_colour" label="TorBox Color" type="action" default="darkseagreen" subsetting="true" visible="eq(-6,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=tb)" />
-			<setting id="provider.oc_colour" label="Offcloud Color" type="action" default="dodgerblue" subsetting="true" visible="eq(-7,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=oc)" />
-			<setting id="provider.easynews_colour" label="Easynews Color" type="action" default="darkturquoise" subsetting="true" visible="eq(-8,0)|eq(-8,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=easynews)" />
-			<setting id="provider.debrid_cloud_colour" label="Debrid Cloud Color" type="action" default="darkviolet" subsetting="true" visible="eq(-9,0)|eq(-9,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=debrid_cloud)" />
-			<setting id="scraper_4k_highlight" label="4K Results Color" type="action" default="magenta" subsetting="true" visible="eq(-10,2)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_quality_color_choice&amp;setting=scraper_4k_highlight)" />
-			<setting id="scraper_1080p_highlight" label="1080P Results Color" type="action" default="cyan" subsetting="true" visible="eq(-11,2)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_quality_color_choice&amp;setting=scraper_1080p_highlight)" />
-			<setting id="scraper_720p_highlight" label="720P Results Color" type="action" default="mediumorchid" subsetting="true" visible="eq(-12,2)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_quality_color_choice&amp;setting=scraper_720p_highlight)" />
-			<setting id="scraper_SD_highlight" label="SD Results Color" type="action" default="dodgerblue" subsetting="true" visible="eq(-13,2)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_quality_color_choice&amp;setting=scraper_SD_highlight)" />
+			<setting id="scraper_4k_highlight" label="4K Results Color" type="action" default="magenta" subsetting="true" visible="eq(-1,2)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_quality_color_choice&amp;setting=scraper_4k_highlight)" />
+			<setting id="scraper_1080p_highlight" label="1080P Results Color" type="action" default="cyan" subsetting="true" visible="eq(-2,2)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_quality_color_choice&amp;setting=scraper_1080p_highlight)" />
+			<setting id="scraper_720p_highlight" label="720P Results Color" type="action" default="mediumorchid" subsetting="true" visible="eq(-3,2)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_quality_color_choice&amp;setting=scraper_720p_highlight)" />
+			<setting id="scraper_SD_highlight" label="SD Results Color" type="action" default="dodgerblue" subsetting="true" visible="eq(-4,2)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_quality_color_choice&amp;setting=scraper_SD_highlight)" />
+			<setting id="provider.debrid_cloud_colour" label="Debrid Cloud Color" type="action" default="darkviolet" subsetting="true" visible="eq(-5,1)|eq(-5,0)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=debrid_cloud)" />
+			<setting id="provider.easynews_colour" label="Easynews Color" type="action" default="darkturquoise" subsetting="true" visible="eq(-6,1)|eq(-6,0)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=easynews)" />
+			<setting id="provider.rd_colour" label="Real Debrid Color" type="action" default="seagreen" subsetting="true" visible="eq(-7,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=rd)" />
+			<setting id="provider.pm_colour" label="Premiumize Color" type="action" default="orangered" subsetting="true" visible="eq(-8,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=pm)" />
+			<setting id="provider.ad_colour" label="All Debrid Color" type="action" default="goldenrod" subsetting="true" visible="eq(-9,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=ad)" />
+			<setting id="provider.tb_colour" label="TorBox Color" type="action" default="darkseagreen" subsetting="true" visible="eq(-10,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=tb)" />
+			<setting id="provider.oc_colour" label="Offcloud Color" type="action" default="dodgerblue" subsetting="true" visible="eq(-11,1)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=oc)" />
+			<setting id="hoster.identify" label="Hosters Color" type="action" default="dodgerblue" subsetting="true" visible="eq(-12,0)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=hoster)" />
+			<setting id="torrent.identify" label="Torrents Color" type="action" default="magenta" subsetting="true" visible="eq(-13,0)" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_color_choice&amp;setting=torrent)" />
 		<!-- Progress Color Highlights -->
 		<setting label="Progress Color Highlights" type="lsep" />
 		<setting id="int_dialog_highlight" label="Internal Scrapers Color" type="action" default="magenta" action="RunPlugin(plugin://plugin.video.pov/?mode=scraper_dialog_color_choice&amp;setting=internal)" />
@@ -313,6 +315,8 @@
 		<setting label="Language" type="lsep" />
 		<setting id="meta_language_display" label="Set Language" type="action" default="English" action="RunPlugin(plugin://plugin.video.pov/?mode=meta_language_choice)" />
 		<setting id="meta_language" label="meta_language" type="text" default="en" visible="false" />
+		<setting id="mpaa.select" label="Preferred Content Rating Region" type="enum" default="0" values="United States|Custom" />
+		<setting id="mpaa_region" label="ISO 3166 1 Code" type="text" default="US" visible="!eq(-1,0)" />
 		<!-- RPDB -->
 		<setting label="Rating Poster Database" type="lsep" />
 		<setting id="rpdb_api_key" label="API Key" type="text" default="" />
