@@ -74,7 +74,6 @@ class POVPlayer(kodi_utils.xbmc_player):
 					self.total_time, self.curr_time = self.getTotalTime(), self.getTime()
 					self.current_point = round(float(self.curr_time/self.total_time * 100), 1)
 					self.remaining_time = round(self.total_time - self.curr_time)
-					if not self.subs_searched: self.run_subtitles()
 					if not self.stingers_checked and self.mediatype == 'movie':
 						if self.stinger_enabled and self.curr_time > self.stinger_check:
 							self.run_stingers()
@@ -267,7 +266,9 @@ class POVPlayer(kodi_utils.xbmc_player):
 		self.playback_event = True
 
 	def onPlayBackStarted(self):
-		try: kodi_utils.hide_busy_dialog()
+		try: 
+			if not self.subs_searched: self.run_subtitles()
+			kodi_utils.hide_busy_dialog()
 		except: pass
 
 	def onPlayBackStopped(self):

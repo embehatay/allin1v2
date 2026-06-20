@@ -1,6 +1,7 @@
 import requests
 from modules.meta_lists import meta_languages
 from modules import kodi_utils
+import json
 # logger = kodi_utils.logger
 
 ls, get_setting = kodi_utils.local_string, kodi_utils.get_setting
@@ -73,7 +74,8 @@ class Subtitles(kodi_utils.xbmc_player):
 		self.subs_action = action_dict[get_setting('subtitles.subs_action', '0')]
 		if self.subs_action not in ('auto',): return
 		self.imdb_id, self.season, self.episode, self.poster = imdb_id, season, episode, poster
-		self.subtitle_path = 'special://temp/'
+		# self.subtitle_path = 'special://temp/'
+		self.subtitle_path = kodi_utils.translate_path(json.loads(kodi_utils.execJSONRPC('{"jsonrpc": "2.0", "id": 1, "method": "Settings.GetSettingValue", "params": {"setting": "subtitles.custompath"}}')).get('result', None)['value'])
 		if season: self.sub_filename = 'POVSubs_%s_%s_%s' % (self.imdb_id, self.season, self.episode)
 		else: self.sub_filename = 'POVSubs_%s' % self.imdb_id
 		self.search_filename = self.sub_filename + '_%s.srt' % self.language1
