@@ -59,11 +59,12 @@ class Subtitles(kodi_utils.xbmc_player):
 			now = int(datetime.now().timestamp())
 			final_path = '%s%s' % (self.subtitle_path, '%s_%s' % (now, self.search_filename))
 		else: final_path = '%s%s' % (self.subtitle_path, self.search_filename)
-		try: content = response.text
-		except: content = response.content
-		with kodi_utils.open_file(final_path, 'w') as file: file.write(content)
-		kodi_utils.sleep(1000)
-		self.setSubtitles(final_path)
+		try: 
+			content = response.text
+			with kodi_utils.open_file(final_path, 'w') as file: file.write(content)
+			kodi_utils.sleep(1000)
+			self.setSubtitles(final_path)
+		except: return False
 		return True
 
 	def run(self, query, imdb_id, season, episode, poster):

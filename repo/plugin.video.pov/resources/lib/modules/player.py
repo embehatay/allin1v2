@@ -13,6 +13,22 @@ get_art_provider, meta_user_info = settings.get_art_provider, settings.metadata_
 fanart_empty = kodi_utils.get_addoninfo('fanart')
 poster_empty = kodi_utils.media_path('box_office.png')
 
+class ThreadWithReturnValue(Thread):
+
+    def __init__(self, group=None, target=None, name=None,
+                 args=(), kwargs={}, Verbose=None):
+        Thread.__init__(self, group, target, name, args, kwargs)
+        self._return = None
+
+    def run(self):
+        if self._target is not None:
+            self._return = self._target(*self._args,
+                                        **self._kwargs)
+
+    def join(self, *args):
+        Thread.join(self, *args)
+        return self._return
+
 class POVPlayer(kodi_utils.xbmc_player):
 	def __init__(self):
 		kodi_utils.xbmc_player.__init__(self)
@@ -228,7 +244,10 @@ class POVPlayer(kodi_utils.xbmc_player):
 			season = self.season if self.mediatype == 'episode' else None
 			episode = self.episode if self.mediatype == 'episode' else None
 			from indexers.subtitles import Subtitles
-			Thread(target=Subtitles().run, args=(self.title, self.imdb_id, season, episode, poster)).start()
+			subThread = ThreadWithReturnValue(target=Subtitles().run, args=(self.title, self.imdb_id, season, episode, poster))
+			subThread.start()
+			if not subThread.join():
+				kodi_utils.notification(32793, icon=poster)
 		except: pass
 
 	def run_stingers(self):
