@@ -243,6 +243,9 @@ def notification(line1, time=3000, icon=None, sound=False):
 	icon = icon or get_addoninfo('icon')
 	dialog.notification('POV', line1, icon, time, sound)
 
+def my_notification(line1 = "default", time=3000, icon=None, sound=False):
+	dialog.notification(line1, line1, icon, time, sound)
+
 def choose_view(view_type, content):
 	from sys import argv
 	__handle__ = int(argv[1])

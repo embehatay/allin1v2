@@ -248,6 +248,8 @@ class POVPlayer(kodi_utils.xbmc_player):
 			subThread.start()
 			if not subThread.join():
 				kodi_utils.notification(32793, icon=poster)
+			else:
+				kodi_utils.my_notification(str(subThread.join()), icon=poster)
 		except: pass
 
 	def run_stingers(self):
@@ -286,8 +288,8 @@ class POVPlayer(kodi_utils.xbmc_player):
 
 	def onPlayBackStarted(self):
 		try: 
-			if not self.subs_searched: self.run_subtitles()
 			kodi_utils.hide_busy_dialog()
+			if not self.subs_searched: self.run_subtitles()
 		except: pass
 
 	def onPlayBackStopped(self):
