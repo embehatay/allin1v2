@@ -141,6 +141,9 @@ def sleep(time):
 def execute_builtin(command):
 	return xbmc.executebuiltin(command)
 
+def execute_builtin_blocking(command):
+	return xbmc.executebuiltin(command, True)
+
 def get_kodi_version():
 	return int(get_infolabel('System.BuildVersion')[0:2])
 
@@ -162,6 +165,10 @@ def show_busy_dialog():
 def hide_busy_dialog():
 	execute_builtin('Dialog.Close(busydialognocancel)')
 	execute_builtin('Dialog.Close(busydialog)')
+
+def hide_busy_dialog_blocking():
+	execute_builtin_blocking('Dialog.Close(busydialognocancel)')
+	execute_builtin_blocking('Dialog.Close(busydialog)')
 
 def close_all_dialog():
 	execute_builtin('Dialog.Close(all,true)')

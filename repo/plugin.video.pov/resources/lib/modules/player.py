@@ -288,7 +288,7 @@ class POVPlayer(kodi_utils.xbmc_player):
 
 	def onPlayBackStarted(self):
 		try: 
-			kodi_utils.hide_busy_dialog()
+			kodi_utils.hide_busy_dialog_blocking()
 			if not self.subs_searched: self.run_subtitles()
 		except: pass
 
