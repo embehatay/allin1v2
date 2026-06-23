@@ -82,6 +82,5 @@ class Subtitles(kodi_utils.xbmc_player):
 		else: self.sub_filename = 'POVSubs_%s' % self.imdb_id
 		self.search_filename = self.sub_filename + '_%s.srt' % self.language1
 		kodi_utils.sleep(2500)
-		# return self._video_file_subs() or self._downloaded_subs() or self._searched_subs()
-		return self._searched_subs()
+		return self._video_file_subs() or self._downloaded_subs() or self._searched_subs()
 
