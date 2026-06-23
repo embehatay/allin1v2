@@ -29,10 +29,11 @@ class Subtitles(kodi_utils.xbmc_player):
 		return response.json()['subtitles'] if response.ok else response.reason
 
 	def _video_file_subs(self):
-		try: available_sub_language = self.getSubtitles()
+		try: 
+			available_sub_language = kodi_utils.player.getAvailableSubtitleStreams()
 		except: available_sub_language = ''
-		if available_sub_language != self.language1: return False
-		if self.auto_enable: self.showSubtitles(True)
+		if self.language1 not in available_sub_language: return False
+		if self.auto_enable: kodi_utils.player.setSubtitleStream(available_sub_language.index(self.language1))
 		kodi_utils.notification(32852, icon=self.poster)
 		return True
 
@@ -41,7 +42,7 @@ class Subtitles(kodi_utils.xbmc_player):
 		final_match = next((i for i in files if i == self.search_filename), None)
 		if not final_match: return False
 		subtitle = '%s%s' % (self.subtitle_path, final_match)
-		self.setSubtitles(subtitle)
+		kodi_utils.player.setSubtitles(subtitle)
 		kodi_utils.notification(32792, icon=self.poster)
 		return True
 
@@ -63,7 +64,7 @@ class Subtitles(kodi_utils.xbmc_player):
 			content = response.text
 			with kodi_utils.open_file(final_path, 'w') as file: file.write(content)
 			kodi_utils.sleep(1000)
-			self.setSubtitles(final_path)
+			kodi_utils.player.setSubtitles(final_path)
 		except: return False
 		return True
 
@@ -81,5 +82,6 @@ class Subtitles(kodi_utils.xbmc_player):
 		else: self.sub_filename = 'POVSubs_%s' % self.imdb_id
 		self.search_filename = self.sub_filename + '_%s.srt' % self.language1
 		kodi_utils.sleep(2500)
-		return self._video_file_subs() or self._downloaded_subs() or self._searched_subs()
+		# return self._video_file_subs() or self._downloaded_subs() or self._searched_subs()
+		return self._searched_subs()
 
