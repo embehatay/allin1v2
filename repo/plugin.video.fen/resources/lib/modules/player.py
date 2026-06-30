@@ -2,12 +2,12 @@
 from urllib.parse import unquote
 import re
 import os
-import time
 from apis.opensubtitles_api import OpenSubtitlesAPI
 from apis.trakt_api import make_trakt_slug
 from modules import kodi_utils as ku, settings as st, watched_status as ws
 from modules.utils import sec2time
 import xbmcgui
+import traceback
 
 from apis.subsource_api import SubsourceAPI
 from apis.subdl_api import SubDLAPI
@@ -29,11 +29,12 @@ class FenPlayer(xbmc_player):
     def __init__(self):
         xbmc_player.__init__(self)
         self.subs_action = get_setting('fen.subtitles.subs_action')
+        self.mark_interval = int(get_setting('fen.playback.mark_interval'))
         self.subs_searched = False
 
     def onPlayBackStarted(self) -> None:
         logger("Chạy vào hàm bắt đầu play back sub_action: " +
-               str(self.subs_action), "on playback started")
+               str(self.mark_interval), str(self.mark_interval))
         if self.subs_action == '1':
             logger("Có chạy vào subaction = 1", "on playback started")
             try:
@@ -164,7 +165,7 @@ class FenPlayer(xbmc_player):
                         if round(self.total_time - self.curr_time) <= self.start_prep:
                             self.run_next_ep()
                             break
-                    if self.curr_time - pass_time > 10:
+                    if self.curr_time - pass_time > self.mark_interval:
                         # logger("total time: " + str(self.getTotalTime()), "current time: " + str(self.getTime()))
                         # logger("CUrretn window dialog id: ", str(xbmcgui.getCurrentWindowDialogId()))
                         pass_time = self.curr_time
@@ -460,13 +461,20 @@ class Subtitles(xbmc_player):
         def _video_file_subs():
             _notification("Thử tìm sub nhúng " + self.language, 1500)
             try:
-                available_sub_language = self.getSubtitles()
+                # available_sub_language = self.getSubtitles()
+                available_sub_language = ku.player.getAvailableSubtitleStreams()
+                ku.logger("danhs ach subs: ", str(available_sub_language))
             except:
-                available_sub_language = ''
-            if available_sub_language == self.language:
+                traceback.print_exc()
+                available_sub_language = []
+            search_language = self.language
+            if self.language == "vi":
+                search_language = "vie"
+            ku.logger("search sub: ", str(search_language))
+            if search_language in available_sub_language:
                 if self.auto_enable == 'true':
-                    self.showSubtitles(True)
-                    _notification("Có sub nhúng " + self.language, 1500)
+                    ku.player.setSubtitleStream(available_sub_language.index(search_language))
+                    _notification("Có sub nhúng " + search_language, 1500)
                     fenPlayer.subs_searched = True
                     return True
             _notification("Ko có sub nhúng " + self.language, 1500)

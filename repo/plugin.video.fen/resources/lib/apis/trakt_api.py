@@ -255,6 +255,7 @@ def trakt_progress(action, media, media_id, percent, season=None, episode=None, 
 	if action == 'clear_progress':
 		url = 'sync/playback/%s' % resume_id
 		result = call_trakt(url, is_delete=True)
+		logger("ket qua goi trakt: ", result)
 	else:
 		url = 'scrobble/pause'
 		if media in ('movie', 'movies'): data = {'movie': {'ids': {'tmdb': media_id}}, 'progress': float(percent)}

@@ -2596,6 +2596,18 @@
 						<popup>false</popup>
 					</control>
 				</setting>
+				<setting id="playback.mark_interval" type="integer" label="33194" help="">
+					<level>0</level>
+					<default>10</default>
+					<constraints>
+						<minimum>5</minimum>
+						<step>1</step>
+						<maximum>15</maximum>
+					</constraints>
+					<control type="slider" format="integer">
+						<popup>false</popup>
+					</control>
+				</setting>
 				<setting id="playback.limit_resolve" type="boolean" label="33102" help="">
 					<level>0</level>
 					<default>false</default>
