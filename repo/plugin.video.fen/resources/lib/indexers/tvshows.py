@@ -3,7 +3,8 @@ from modules import kodi_utils, settings
 from modules.metadata import tvshow_meta
 from modules.utils import manual_function_import, get_datetime, make_thread_list_enumerate, make_thread_list_multi_arg, get_current_timestamp, paginate_list
 from modules.watched_status import get_watched_info_tv, get_watched_status_tvshow
-# logger = kodi_utils.logger
+logger = kodi_utils.logger
+import traceback
 
 sleep, meta_function, get_datetime_function, add_item, xbmc_actor, home = kodi_utils.sleep, tvshow_meta, get_datetime, kodi_utils.add_item, kodi_utils.xbmc_actor, kodi_utils.home
 get_watched_function, get_watched_info_function, set_category, json = get_watched_status_tvshow, get_watched_info_tv, kodi_utils.set_category, kodi_utils.json
@@ -76,7 +77,11 @@ class TVShows:
 				self.id_type = 'trakt_dict'
 				data = function(page_no)
 				try: self.list = [i['show']['ids'] for i in data]
-				except: self.list = [i['ids'] for i in data]
+				except: 
+					try: 
+						self.list = [i['ids'] for i in data]
+					except:
+						self.list = [i['show']['ids'] for i in data[0]]
 				if self.action != 'trakt_recommendations': self.new_page = {'new_page': string(page_no + 1)}
 			elif self.action in trakt_personal:
 				self.id_type = 'trakt_dict'
@@ -106,7 +111,9 @@ class TVShows:
 				data = function(self.params['certification'], page_no)
 				self.list = [i['show']['ids'] for i in data]
 				self.new_page = {'new_page': string(page_no + 1), 'certification': self.params['certification']}
+			logger("before add items:", "hihi")
 			add_items(handle, self.worker())
+			logger("after add items:", "haha")
 			if self.total_pages and not self.is_external:
 				jump_to = jump_to_enabled()
 				if jump_to != 3:
@@ -116,7 +123,9 @@ class TVShows:
 			if self.new_page and not self.widget_hide_next_page:
 						self.new_page.update({'mode': mode, 'action': self.action, 'category_name': self.category_name})
 						add_dir(self.new_page, nextpage_str % self.new_page['new_page'], handle, 'nextpage', nextpage_landscape)
-		except: pass
+		except: 
+			traceback.print_exc()
+			pass
 		set_content(handle, content_type)
 		set_category(handle, ls(self.category_name))
 		end_directory(handle, False if self.is_external else None)
@@ -221,6 +230,7 @@ class TVShows:
 			[i.join() for i in threads]
 			self.items.sort(key=lambda k: k[1])
 			self.items = [i[0] for i in self.items]
+		logger("self items: ", str(self.items))
 		return self.items
 
 	def paginate_list(self, data, page_no):
